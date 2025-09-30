@@ -1,0 +1,13 @@
+numpy
+pandas
+matplotlib
+seaborn
+scikit-learn
+jupyter
+notebook
+astropy
+polars
+pyarrow
+healpy
+reproject
+aplpy

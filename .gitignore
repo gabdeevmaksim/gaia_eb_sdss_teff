@@ -1,0 +1,29 @@
+# Data files
+data/raw/*
+data/processed/*
+data/external/*
+data/interim/*
+!data/*/README.md
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+.venv/
+venv/
+env/
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
