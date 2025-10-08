@@ -1,0 +1,81 @@
+# Configuration for Eclipsing Binary Temperature Analysis Pipeline
+
+# Data paths (relative to project root)
+paths:
+  data_root: data
+  raw: data/raw
+  processed: data/processed
+  external: data/external
+  interim: data/interim
+  cache: data/cache
+  models: models
+  reports: reports
+  figures: reports/figures
+
+# Dataset filenames
+datasets:
+  # Raw data
+  eb_catalog: eb_panstarrs_with_param-result.ecsv
+
+  # External data (Pan-STARRS photometry)
+  panstarrs_phot: gaia_eb_panstarrs_phot_Dedulek.csv
+  panstarrs_duplicates: gaia_eb_panstarrs_phot_Dedulek_duplicates.csv
+  panstarrs_duplicates_merged: gaia_eb_panstarrs_phot_Dedulek_duplicates_merged.csv
+  panstarrs_cleaned: gaia_eb_panstarrs_phot_cleaned.csv
+
+  # Processed data
+  eb_catalog_parquet: eb_catalog.parquet
+  eb_catalog_with_pm: eb_catalog_with_pm.parquet
+  source_ids: original_ext_source_id.csv
+  panstarrs_with_temps: gaia_eb_panstarrs_phot_with_temperatures.parquet
+  sdss_teff: gaia_eb_sdss_teff.parquet
+  colors_temps: gaia_eb_colors_temperatures.parquet
+  ml_training_clean: ml_training_data_clean.parquet
+  ml_training_with_gaia: ml_training_data_with_gaia.parquet
+
+# Data processing parameters
+processing:
+  # Missing value indicator
+  missing_value: -999.0
+
+  # Color constraints for temperature calculations
+  color_threshold: -0.5
+
+  # Photometric bands
+  panstarrs_bands: ['g', 'r', 'i', 'z', 'y']
+  magnitude_columns: ['gPSFMag', 'rPSFMag', 'iPSFMag', 'zPSFMag', 'yPSFMag']
+  error_columns: ['gPSFMagErr', 'rPSFMagErr', 'iPSFMagErr', 'zPSFMagErr', 'yPSFMagErr']
+
+# Machine learning parameters
+ml:
+  # Train/test split
+  test_size: 0.2
+  random_state: 42
+
+  # Random Forest parameters
+  rf_n_estimators: 300
+  rf_max_depth: 20
+  rf_min_samples_split: 5
+  rf_min_samples_leaf: 4
+  rf_max_features: log2
+  rf_n_jobs: 12
+
+# Temperature calculation coefficients
+# Empirical color-temperature relations
+temperature:
+  # Te = A / (color + B) * 10^4
+  gr_coefficients:
+    A: 1.09
+    B: 1.47
+  ri_coefficients:
+    A: 0.5
+    B: 0.78
+  iz_coefficients:
+    A: 0.38
+    B: 0.64
+
+# Logging configuration
+logging:
+  level: INFO
+  format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  date_format: '%Y-%m-%d %H:%M:%S'

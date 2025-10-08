@@ -18,9 +18,15 @@ New Temperature Estimates:
 The script reads the existing parquet file, adds the new columns, and saves the updated data.
 """
 
+import sys
 import polars as pl
 import numpy as np
 from pathlib import Path
+
+# Add src to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from src.config import get_config
 
 
 def calculate_bv_temperature(df: pl.DataFrame) -> pl.Expr:
@@ -100,23 +106,40 @@ def calculate_new_colors_and_temperatures(input_file: str, output_file: str = No
     print(f"Original columns: {len(df.columns)}")
     
     # Calculate new colors using the provided formulas
+    # Important: Set results to null when input values are missing (-999.0)
     print("Calculating new color indices...")
     
     df_with_colors = df.with_columns([
         # B magnitude: gPSFMag + 0.313*g_r_color + 0.227
-        (pl.col("gPSFMag") + 0.313 * pl.col("g_r_color") + 0.227).alias("B_mag"),
+        # Only calculate if g_r_color is valid (not -999.0)
+        pl.when((pl.col("g_r_color") != -999.0) & (pl.col("gPSFMag") > 0))
+          .then(pl.col("gPSFMag") + 0.313 * pl.col("g_r_color") + 0.227)
+          .otherwise(None)
+          .alias("B_mag"),
         
         # V magnitude: gPSFMag - 0.5784*g_r_color - 0.004
-        (pl.col("gPSFMag") - 0.5784 * pl.col("g_r_color") - 0.004).alias("V_mag"),
+        pl.when((pl.col("g_r_color") != -999.0) & (pl.col("gPSFMag") > 0))
+          .then(pl.col("gPSFMag") - 0.5784 * pl.col("g_r_color") - 0.004)
+          .otherwise(None)
+          .alias("V_mag"),
     ]).with_columns([
-        # B-V color: B - V
-        (pl.col("B_mag") - pl.col("V_mag")).alias("B_V_color"),
+        # B-V color: B - V (only if both B and V are valid)
+        pl.when(pl.col("B_mag").is_not_null() & pl.col("V_mag").is_not_null())
+          .then(pl.col("B_mag") - pl.col("V_mag"))
+          .otherwise(None)
+          .alias("B_V_color"),
         
-        # R-I color: r_i_color + 0.212
-        (pl.col("r_i_color") + 0.212).alias("R_I_color"),
+        # R-I color: r_i_color + 0.212 (only if r_i_color is valid)
+        pl.when(pl.col("r_i_color") != -999.0)
+          .then(pl.col("r_i_color") + 0.212)
+          .otherwise(None)
+          .alias("R_I_color"),
     ]).with_columns([
-        # V-K color: 1.896*B_V + 1.131*R_I
-        (1.896 * pl.col("B_V_color") + 1.131 * pl.col("R_I_color")).alias("V_K_color")
+        # V-K color: 1.896*B_V + 1.131*R_I (only if both B-V and R-I are valid)
+        pl.when(pl.col("B_V_color").is_not_null() & pl.col("R_I_color").is_not_null())
+          .then(1.896 * pl.col("B_V_color") + 1.131 * pl.col("R_I_color"))
+          .otherwise(None)
+          .alias("V_K_color")
     ])
     
     # Calculate temperature estimates
@@ -213,39 +236,51 @@ def calculate_new_colors_and_temperatures(input_file: str, output_file: str = No
 
 def main():
     """Main function to run the color calculation script."""
-    
-    # Define file paths
-    input_file = "data/processed/gaia_eb_panstarrs_phot_with_temperatures.parquet"
-    
+    config = get_config()
+
+    print("=" * 70)
+    print("ADD COLORS AND TEMPERATURES")
+    print("=" * 70)
+    print(f"Project root: {config.project_root}")
+    print()
+
+    # Get file paths from config
+    input_file = config.get_dataset_path('panstarrs_with_temps', 'processed')
+
     # Check if input file exists
-    if not Path(input_file).exists():
-        print(f"Error: Input file {input_file} not found!")
-        return
-    
+    if not input_file.exists():
+        print(f"Error: Input file not found:")
+        print(f"  {input_file}")
+        sys.exit(1)
+
     # Create backup before modifying
-    backup_file = input_file.replace(".parquet", "_backup.parquet")
-    print(f"Creating backup at {backup_file}...")
-    
+    backup_file = input_file.parent / f"{input_file.stem}_backup.parquet"
+    print(f"Creating backup...")
+    print(f"  {backup_file.relative_to(config.project_root)}")
+
     # Read and save backup
     df_backup = pl.read_parquet(input_file)
     df_backup.write_parquet(backup_file)
-    print(f"Backup created successfully")
-    
+    print(f"  ✓ Backup created")
+
     # Calculate new colors and temperatures
     try:
-        df_updated = calculate_new_colors_and_temperatures(input_file)
+        print("\nCalculating new colors and temperatures...")
+        df_updated = calculate_new_colors_and_temperatures(str(input_file))
+
+        print("\n" + "=" * 70)
         print("✅ Color and temperature calculation completed successfully!")
-        
-        # Show column summary
-        print(f"\nFinal dataset:")
         print(f"  Rows: {len(df_updated):,}")
         print(f"  Columns: {len(df_updated.columns)}")
-        print(f"  All columns: {df_updated.columns}")
-        
+        print(f"  Output: {input_file.relative_to(config.project_root)}")
+        print("=" * 70)
+
     except Exception as e:
-        print(f"❌ Error during calculation: {e}")
-        print("Backup file preserved for safety")
-        raise
+        print(f"\n❌ Error during calculation: {e}")
+        print(f"Backup preserved at: {backup_file.relative_to(config.project_root)}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
 
 
 if __name__ == "__main__":

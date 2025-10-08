@@ -18,9 +18,15 @@ New Temperature Estimates:
 The script reads the existing parquet file, adds the new columns, and saves the updated data.
 """
 
+import sys
 import polars as pl
 import numpy as np
 from pathlib import Path
+
+# Add src to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from src.config import get_config
 
 
 def calculate_bv_temperature(df: pl.DataFrame) -> pl.Expr:
@@ -213,39 +219,51 @@ def calculate_new_colors_and_temperatures(input_file: str, output_file: str = No
 
 def main():
     """Main function to run the color calculation script."""
-    
-    # Define file paths
-    input_file = "data/processed/gaia_eb_panstarrs_phot_with_temperatures.parquet"
-    
+    config = get_config()
+
+    print("=" * 70)
+    print("ADD NEW COLORS AND TEMPERATURES")
+    print("=" * 70)
+    print(f"Project root: {config.project_root}")
+    print()
+
+    # Get file paths from config
+    input_file = config.get_dataset_path('panstarrs_with_temps', 'processed')
+
     # Check if input file exists
-    if not Path(input_file).exists():
-        print(f"Error: Input file {input_file} not found!")
-        return
-    
+    if not input_file.exists():
+        print(f"Error: Input file not found:")
+        print(f"  {input_file}")
+        sys.exit(1)
+
     # Create backup before modifying
-    backup_file = input_file.replace(".parquet", "_backup.parquet")
-    print(f"Creating backup at {backup_file}...")
-    
+    backup_file = input_file.parent / f"{input_file.stem}_backup.parquet"
+    print(f"Creating backup...")
+    print(f"  {backup_file.relative_to(config.project_root)}")
+
     # Read and save backup
     df_backup = pl.read_parquet(input_file)
     df_backup.write_parquet(backup_file)
-    print(f"Backup created successfully")
-    
+    print(f"  ✓ Backup created")
+
     # Calculate new colors and temperatures
     try:
-        df_updated = calculate_new_colors_and_temperatures(input_file)
+        print("\nCalculating new colors and temperatures...")
+        df_updated = calculate_new_colors_and_temperatures(str(input_file))
+
+        print("\n" + "=" * 70)
         print("✅ Color and temperature calculation completed successfully!")
-        
-        # Show column summary
-        print(f"\nFinal dataset:")
         print(f"  Rows: {len(df_updated):,}")
         print(f"  Columns: {len(df_updated.columns)}")
-        print(f"  All columns: {df_updated.columns}")
-        
+        print(f"  Output: {input_file.relative_to(config.project_root)}")
+        print("=" * 70)
+
     except Exception as e:
-        print(f"❌ Error during calculation: {e}")
-        print("Backup file preserved for safety")
-        raise
+        print(f"\n❌ Error during calculation: {e}")
+        print(f"Backup preserved at: {backup_file.relative_to(config.project_root)}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
 
 
 if __name__ == "__main__":

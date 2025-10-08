@@ -4,43 +4,67 @@ Calculate effective temperatures from Pan-STARRS colors using empirical relation
 Applies color constraints (>= -0.5) and computes average temperatures.
 """
 
+import sys
 import pandas as pd
 import numpy as np
 from pathlib import Path
 
+# Add src to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from src.config import get_config
+
+
 def main():
-    data_dir = Path("data/external")
+    # Load configuration
+    config = get_config()
+
+    # Get paths from config
+    input_file = config.get_dataset_path('panstarrs_cleaned', 'external')
+    output_file = config.get_dataset_path('panstarrs_with_temps', 'external')
+
+    # Get parameters from config
+    missing_val = config.get('processing', 'missing_value')
+    color_threshold = config.get('processing', 'color_threshold')
+
+    # Get temperature calculation coefficients
+    gr_coef = config.get('temperature', 'gr_coefficients')
+    ri_coef = config.get('temperature', 'ri_coefficients')
+    iz_coef = config.get('temperature', 'iz_coefficients')
 
     # Load the cleaned photometry data
+    print("=" * 70)
+    print("TEMPERATURE CALCULATION")
+    print("=" * 70)
+    print(f"Input:  {input_file.relative_to(config.project_root)}")
+    print(f"Output: {output_file.relative_to(config.project_root)}")
+    print()
+
     print("Loading cleaned photometry data...")
-    input_file = data_dir / "gaia_eb_panstarrs_phot_cleaned.csv"
     df = pd.read_csv(input_file)
     print(f"Input data shape: {df.shape}")
 
-    # Missing value indicator
-    missing_val = -999.0
-
     # Calculate temperatures with color constraints
-    print("Calculating temperatures...")
+    print("\nCalculating temperatures...")
 
-    # Te_gr: Only for g_r_color >= -0.5
+    # Te_gr: Only for g_r_color >= color_threshold
     df['Te_gr'] = np.where(
-        (df['g_r_color'] != missing_val) & (df['g_r_color'] >= -0.5),
-        1.09 / (df['g_r_color'] + 1.47) * 1e4,
+        (df['g_r_color'] != missing_val) & (df['g_r_color'] >= color_threshold),
+        gr_coef['A'] / (df['g_r_color'] + gr_coef['B']) * 1e4,
         missing_val
     )
 
-    # Te_ri: Only for r_i_color >= -0.5
+    # Te_ri: Only for r_i_color >= color_threshold
     df['Te_ri'] = np.where(
-        (df['r_i_color'] != missing_val) & (df['r_i_color'] >= -0.5),
-        0.5 / (df['r_i_color'] + 0.78) * 1e4,
+        (df['r_i_color'] != missing_val) & (df['r_i_color'] >= color_threshold),
+        ri_coef['A'] / (df['r_i_color'] + ri_coef['B']) * 1e4,
         missing_val
     )
 
-    # Te_iz: Only for i_z_color >= -0.5
+    # Te_iz: Only for i_z_color >= color_threshold
     df['Te_iz'] = np.where(
-        (df['i_z_color'] != missing_val) & (df['i_z_color'] >= -0.5),
-        0.38 / (df['i_z_color'] + 0.64) * 1e4,
+        (df['i_z_color'] != missing_val) & (df['i_z_color'] >= color_threshold),
+        iz_coef['A'] / (df['i_z_color'] + iz_coef['B']) * 1e4,
         missing_val
     )
 
@@ -83,10 +107,13 @@ def main():
             print(f"  {temp_col}: {valid_temps.min():.0f} - {valid_temps.max():.0f} K (median: {valid_temps.median():.0f} K)")
 
     # Save the data with temperatures
-    output_file = data_dir / "gaia_eb_panstarrs_phot_with_temperatures.csv"
+    # Ensure output directory exists
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+
     df.to_csv(output_file, index=False)
-    print(f"\nSaved data with temperatures to: {output_file}")
-    print(f"Final table shape: {df.shape}")
+    print(f"\n✓ Saved data with temperatures")
+    print(f"  Final table shape: {df.shape}")
+    print("=" * 70)
 
     return df
 

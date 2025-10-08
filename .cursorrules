@@ -1,0 +1,867 @@
+# ML Project Structure and Best Practices
+
+## Project Overview
+This file contains rules and patterns for building production-ready ML projects based on the eclipsing binary temperature analysis project. Follow these patterns for consistent, maintainable, and portable code.
+
+---
+
+## 1. Configuration System
+
+### ALWAYS use centralized YAML configuration
+- Create `config/config.yaml` with all paths, datasets, and parameters
+- NEVER hardcode paths, values, or parameters in scripts/notebooks
+- Use relative paths in config, convert to absolute at runtime
+
+### Configuration Structure
+```yaml
+paths:
+  data_root: data
+  raw: data/raw
+  processed: data/processed
+  external: data/external
+  interim: data/interim
+  models: models
+  figures: reports/figures
+
+datasets:
+  # Use descriptive keys, not filenames
+  eb_catalog: eb_panstarrs_with_param-result.ecsv
+  ml_training_with_gaia: ml_training_data_with_gaia.parquet
+
+processing:
+  missing_value: -999.0
+  color_threshold: -0.5
+
+ml:
+  test_size: 0.2
+  random_state: 42
+  rf_n_estimators: 300
+  rf_max_depth: 20
+  rf_n_jobs: -1
+```
+
+### Configuration API Pattern
+```python
+# src/config/settings.py
+class Config:
+    def __init__(self, config_path: Optional[Path] = None, project_root: Optional[Path] = None):
+        if project_root is not None:
+            self.project_root = Path(project_root).resolve()
+        else:
+            self.project_root = self._find_project_root()
+
+        if config_path is None:
+            config_path = self.project_root / 'config' / 'config.yaml'
+
+        with open(config_path, 'r') as f:
+            self._config = yaml.safe_load(f)
+
+    def get_path(self, key: str, ensure_exists: bool = False) -> Path:
+        """Get absolute path from config key."""
+        rel_path = self._config['paths'][key]
+        abs_path = self.project_root / rel_path
+        if ensure_exists:
+            abs_path.mkdir(parents=True, exist_ok=True)
+        return abs_path
+
+    def get_dataset_path(self, dataset_key: str, location: str = 'processed') -> Path:
+        """Get dataset path from key and location."""
+        filename = self._config['datasets'][dataset_key]
+        location_path = self.get_path(location)
+        return location_path / filename
+
+    def get(self, section: str, key: str, default: Any = None) -> Any:
+        """Get parameter value."""
+        return self._config.get(section, {}).get(key, default)
+
+# Singleton pattern
+_config_instance = None
+
+def get_config(config_path: Optional[Path] = None, project_root: Optional[Path] = None) -> Config:
+    global _config_instance
+    if _config_instance is None:
+        _config_instance = Config(config_path, project_root)
+    return _config_instance
+```
+
+### Usage in Scripts
+```python
+# At the top of every script
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from src.config import get_config
+
+def main():
+    config = get_config()
+
+    # Get paths
+    input_file = config.get_dataset_path('eb_catalog', 'raw')
+    output_file = config.get_dataset_path('eb_catalog_parquet', 'processed')
+    models_dir = config.get_path('models', ensure_exists=True)
+
+    # Get parameters
+    missing_val = config.get('processing', 'missing_value')
+    test_size = config.get('ml', 'test_size')
+    random_state = config.get('ml', 'random_state')
+```
+
+---
+
+## 2. Reusable Modules for Notebooks
+
+### Create src/notebook_utils.py
+NEVER duplicate data loading, plotting, or utility code in notebooks. Create reusable functions.
+
+```python
+# src/notebook_utils.py
+from typing import Union, Optional
+import pandas as pd
+import polars as pl
+from pathlib import Path
+from src.config import get_config
+
+def load_ml_data(with_gaia: bool = True, format: str = 'pandas') -> Union[pd.DataFrame, pl.DataFrame]:
+    """
+    Load ML training data.
+
+    Parameters
+    ----------
+    with_gaia : bool
+        Whether to load data with Gaia colors
+    format : str
+        'pandas' or 'polars'
+    """
+    config = get_config()
+    if with_gaia:
+        file_path = config.get_dataset_path('ml_training_with_gaia', 'processed')
+    else:
+        file_path = config.get_dataset_path('ml_training_clean', 'processed')
+
+    if format == 'pandas':
+        return pd.read_parquet(file_path)
+    elif format == 'polars':
+        return pl.read_parquet(file_path)
+    else:
+        raise ValueError(f"Unknown format: {format}")
+
+def load_model(model_id: str):
+    """Load trained model by ID."""
+    import joblib
+    config = get_config()
+    models_dir = config.get_path('models')
+    model_file = models_dir / f"{model_id}.pkl"
+    return joblib.load(model_file)
+
+def save_figure(fig, filename: str, subdir: Optional[str] = None, dpi: int = 300, **kwargs):
+    """
+    Save matplotlib figure to reports/figures.
+
+    Parameters
+    ----------
+    fig : matplotlib.figure.Figure
+        Figure to save
+    filename : str
+        Output filename (e.g., 'temperature_distribution.png')
+    subdir : str, optional
+        Subdirectory within figures/ (e.g., 'exploratory')
+    dpi : int
+        Resolution (default: 300)
+    """
+    config = get_config()
+    figures_dir = config.get_path('figures', ensure_exists=True)
+
+    if subdir:
+        save_dir = figures_dir / subdir
+        save_dir.mkdir(parents=True, exist_ok=True)
+    else:
+        save_dir = figures_dir
+
+    save_path = save_dir / filename
+    fig.savefig(save_path, dpi=dpi, bbox_inches='tight', **kwargs)
+    print(f"Saved: {save_path}")
+
+# Export constants for notebooks
+CONFIG = get_config()
+MISSING_VALUE = CONFIG.get('processing', 'missing_value')
+TEST_SIZE = CONFIG.get('ml', 'test_size')
+RANDOM_STATE = CONFIG.get('ml', 'random_state')
+```
+
+### Notebook Template
+```python
+# At the top of every notebook
+import sys
+sys.path.insert(0, '..')
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Import utilities
+from src.notebook_utils import (
+    load_ml_data,
+    load_model,
+    save_figure,
+    MISSING_VALUE,
+    TEST_SIZE,
+    RANDOM_STATE
+)
+from src.features import engineer_all_features
+
+# Configuration
+%matplotlib inline
+sns.set_style('whitegrid')
+
+# Load data
+data = load_ml_data(with_gaia=True)
+print(f"Loaded {len(data):,} objects")
+
+# Analysis code...
+
+# Save figure
+fig, ax = plt.subplots(figsize=(10, 6))
+# plotting code...
+save_figure(fig, 'my_analysis.png', subdir='exploratory')
+```
+
+---
+
+## 3. Feature Engineering Module
+
+### Create src/features/engineering.py
+All feature engineering should be modular and reusable across notebooks and pipelines.
+
+```python
+# src/features/engineering.py
+from typing import List, Tuple
+import pandas as pd
+import numpy as np
+from sklearn.feature_selection import SelectKBest, f_regression
+
+def engineer_all_features(
+    df: pd.DataFrame,
+    color_cols: List[str],
+    mag_cols: List[str] = None,
+    include_polynomials: bool = True,
+    include_interactions: bool = True,
+    include_log: bool = True,
+    include_temp_dependent: bool = True,
+    include_mag_features: bool = True
+) -> pd.DataFrame:
+    """
+    Engineer all features for ML model.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input dataframe
+    color_cols : list of str
+        Color column names (e.g., ['g_r_color', 'r_i_color'])
+    mag_cols : list of str, optional
+        Magnitude column names
+    """
+    df_eng = df.copy()
+
+    if include_polynomials:
+        df_eng = create_polynomial_features(df_eng, color_cols, degree=3)
+
+    if include_interactions:
+        df_eng = create_interaction_features(df_eng, color_cols)
+
+    if include_log:
+        df_eng = create_log_features(df_eng, color_cols)
+
+    if include_temp_dependent:
+        df_eng = create_temperature_dependent_features(df_eng, color_cols)
+
+    if include_mag_features and mag_cols:
+        df_eng = create_magnitude_features(df_eng, mag_cols)
+
+    return df_eng
+
+def create_polynomial_features(df: pd.DataFrame, cols: List[str], degree: int = 2) -> pd.DataFrame:
+    """Create polynomial features (x^2, x^3, etc.)."""
+    df_out = df.copy()
+    for col in cols:
+        for d in range(2, degree + 1):
+            df_out[f'{col}_pow{d}'] = df[col] ** d
+    return df_out
+
+def create_interaction_features(df: pd.DataFrame, cols: List[str]) -> pd.DataFrame:
+    """Create pairwise interaction features (x1 * x2)."""
+    df_out = df.copy()
+    for i, col1 in enumerate(cols):
+        for col2 in cols[i+1:]:
+            df_out[f'{col1}_x_{col2}'] = df[col1] * df[col2]
+    return df_out
+
+def select_best_features(
+    X: pd.DataFrame,
+    y: pd.Series,
+    k: int = 20,
+    score_func=f_regression
+) -> Tuple[pd.DataFrame, object]:
+    """
+    Select k best features using univariate feature selection.
+
+    Returns
+    -------
+    X_selected : pd.DataFrame
+        Selected features
+    selector : SelectKBest
+        Fitted selector (for transforming new data)
+    """
+    selector = SelectKBest(score_func=score_func, k=k)
+    X_selected = selector.fit_transform(X, y)
+    selected_features = X.columns[selector.get_support()].tolist()
+
+    return pd.DataFrame(X_selected, columns=selected_features, index=X.index), selector
+
+def get_feature_importance(model, feature_names: List[str], top_n: int = 20) -> pd.DataFrame:
+    """
+    Get feature importance from tree-based model.
+
+    Returns
+    -------
+    pd.DataFrame
+        Feature importance sorted by importance
+    """
+    importance_df = pd.DataFrame({
+        'feature': feature_names,
+        'importance': model.feature_importances_
+    }).sort_values('importance', ascending=False)
+
+    return importance_df.head(top_n)
+```
+
+---
+
+## 4. Pipeline System
+
+### Create Base Pipeline Classes (src/pipeline/base.py)
+
+```python
+# src/pipeline/base.py
+import logging
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional
+from datetime import datetime
+from src.config import get_config
+
+class PipelineStep(ABC):
+    """Base class for a pipeline step."""
+
+    def __init__(self, name: str):
+        self.name = name
+        self.logger = logging.getLogger(f"pipeline.{name}")
+        self.start_time = None
+        self.end_time = None
+        self.status = "pending"
+        self.error = None
+
+    @abstractmethod
+    def run(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Execute the pipeline step.
+
+        Parameters
+        ----------
+        context : dict
+            Shared context containing outputs from previous steps
+
+        Returns
+        -------
+        dict
+            Updated context with this step's outputs
+        """
+        pass
+
+    def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute the step with timing and error handling."""
+        self.logger.info(f"Starting step: {self.name}")
+        self.start_time = datetime.now()
+        self.status = "running"
+
+        try:
+            context = self.run(context)
+            self.status = "completed"
+            self.logger.info(f"✓ Completed step: {self.name}")
+
+        except Exception as e:
+            self.status = "failed"
+            self.error = str(e)
+            self.logger.error(f"✗ Failed step: {self.name} - {e}")
+            raise
+
+        finally:
+            self.end_time = datetime.now()
+            duration = (self.end_time - self.start_time).total_seconds()
+            self.logger.info(f"  Duration: {duration:.1f}s")
+
+        return context
+
+class Pipeline:
+    """Base pipeline that orchestrates multiple steps."""
+
+    def __init__(self, name: str, steps: List[PipelineStep]):
+        self.name = name
+        self.steps = steps
+        self.logger = logging.getLogger(f"pipeline.{name}")
+        self.config = get_config()
+
+    def run(self, initial_context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Run the complete pipeline."""
+        self.logger.info("=" * 70)
+        self.logger.info(f"PIPELINE: {self.name}")
+        self.logger.info("=" * 70)
+
+        # Initialize context
+        self.context = initial_context or {}
+        self.context['config'] = self.config
+
+        # Execute steps sequentially
+        for i, step in enumerate(self.steps, 1):
+            self.logger.info(f"[{i}/{len(self.steps)}] {step.name}")
+            self.context = step.execute(self.context)
+            self.logger.info("")
+
+        self._print_summary()
+        return self.context
+
+    def _print_summary(self):
+        """Print pipeline execution summary."""
+        # Implementation from base.py
+        pass
+```
+
+### Example: ML Training Pipeline
+
+```python
+# src/pipeline/ml_pipeline.py
+from .base import Pipeline, PipelineStep
+from ..features import engineer_all_features
+
+class LoadMLDataStep(PipelineStep):
+    def __init__(self):
+        super().__init__("Load ML Data")
+
+    def run(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        from src.notebook_utils import load_ml_data
+
+        data = load_ml_data(with_gaia=True)
+        self.logger.info(f"Loaded {len(data):,} objects")
+
+        context['ml_data'] = data
+        return context
+
+class FeatureEngineeringStep(PipelineStep):
+    def __init__(self, color_cols=None, mag_cols=None):
+        super().__init__("Feature Engineering")
+        self.color_cols = color_cols or ['g_r_color', 'r_i_color', 'bp_rp']
+        self.mag_cols = mag_cols or ['gPSFMag']
+
+    def run(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        data = context['ml_data']
+
+        data_features = engineer_all_features(
+            data,
+            color_cols=self.color_cols,
+            mag_cols=self.mag_cols
+        )
+
+        self.logger.info(f"Features created: {data_features.shape[1]}")
+
+        context['data_features'] = data_features
+        return context
+
+class MLTrainingPipeline(Pipeline):
+    """Complete ML training pipeline."""
+
+    def __init__(self, n_estimators=None, max_depth=None):
+        steps = [
+            LoadMLDataStep(),
+            FeatureEngineeringStep(),
+            PrepareTrainTestStep(),
+            TrainModelStep(n_estimators=n_estimators, max_depth=max_depth),
+            EvaluateModelStep(),
+            SaveModelStep(),
+        ]
+
+        super().__init__("ML Training Pipeline", steps)
+```
+
+---
+
+## 5. Master Pipeline CLI
+
+### Create pipeline.py in project root
+
+```python
+#!/usr/bin/env python3
+"""
+Master pipeline orchestrator.
+
+Usage:
+    # Run complete pipeline
+    python pipeline.py --all
+
+    # Run data processing only
+    python pipeline.py --data
+
+    # Run ML training only
+    python pipeline.py --ml
+
+    # Custom parameters
+    python pipeline.py --ml --n-estimators 500 --max-depth 25
+
+    # Dry run
+    python pipeline.py --all --dry-run
+"""
+
+import argparse
+import logging
+from src.pipeline import DataProcessingPipeline, MLTrainingPipeline
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+def main():
+    parser = argparse.ArgumentParser(description='ML Project Pipeline')
+
+    # Pipeline selection (mutually exclusive)
+    pipeline_group = parser.add_mutually_exclusive_group(required=True)
+    pipeline_group.add_argument('--all', action='store_true',
+                                help='Run complete pipeline')
+    pipeline_group.add_argument('--data', action='store_true',
+                                help='Run data processing only')
+    pipeline_group.add_argument('--ml', action='store_true',
+                                help='Run ML training only')
+
+    # Model parameters
+    parser.add_argument('--n-estimators', type=int,
+                        help='Number of trees (default: from config)')
+    parser.add_argument('--max-depth', type=int,
+                        help='Max tree depth (default: from config)')
+
+    # Options
+    parser.add_argument('--dry-run', action='store_true',
+                        help='Show execution plan without running')
+
+    args = parser.parse_args()
+
+    # Run selected pipeline
+    if args.all:
+        run_complete_pipeline(
+            n_estimators=args.n_estimators,
+            max_depth=args.max_depth,
+            dry_run=args.dry_run
+        )
+    elif args.data:
+        run_data_pipeline(dry_run=args.dry_run)
+    elif args.ml:
+        run_ml_pipeline(
+            n_estimators=args.n_estimators,
+            max_depth=args.max_depth,
+            dry_run=args.dry_run
+        )
+
+if __name__ == '__main__':
+    main()
+```
+
+---
+
+## 6. Directory Structure
+
+ALWAYS follow this structure for ML projects:
+
+```
+project_root/
+├── pipeline.py                 # Master pipeline CLI
+├── config/
+│   └── config.yaml            # Central configuration
+├── src/
+│   ├── config/
+│   │   ├── __init__.py
+│   │   └── settings.py        # Configuration API
+│   ├── pipeline/
+│   │   ├── __init__.py
+│   │   ├── base.py            # Base classes
+│   │   ├── data_pipeline.py   # Data processing
+│   │   └── ml_pipeline.py     # ML training
+│   ├── features/
+│   │   ├── __init__.py
+│   │   └── engineering.py     # Feature engineering
+│   ├── data/
+│   │   ├── __init__.py
+│   │   └── load_data.py       # Data loaders
+│   ├── visualization/
+│   │   ├── __init__.py
+│   │   └── plots.py           # Plotting utilities
+│   └── notebook_utils.py      # Notebook utilities
+├── scripts/                    # Individual processing scripts
+│   ├── convert_format.py
+│   ├── clean_data.py
+│   └── train_model.py
+├── notebooks/                  # Jupyter notebooks
+│   ├── 01_exploratory_analysis.ipynb
+│   ├── 02_feature_engineering.ipynb
+│   └── 03_model_training.ipynb
+├── data/
+│   ├── raw/                   # Original immutable data
+│   ├── processed/             # Processed data
+│   ├── external/              # Third-party data
+│   └── interim/               # Intermediate processing
+├── models/                     # Trained models
+├── reports/
+│   └── figures/               # Generated plots
+├── tests/                      # Unit tests
+├── docs/                       # Documentation
+├── requirements.txt
+├── README.md
+├── CLAUDE.md                  # Project instructions for Claude
+└── .cursorrules               # This file
+```
+
+---
+
+## 7. Coding Standards
+
+### Import Organization
+```python
+# Standard library
+import sys
+from pathlib import Path
+from typing import List, Dict, Optional, Any
+
+# Third-party
+import pandas as pd
+import numpy as np
+from sklearn.ensemble import RandomForestRegressor
+
+# Local
+from src.config import get_config
+from src.features import engineer_all_features
+```
+
+### Path Handling
+- ALWAYS use `pathlib.Path`, never string concatenation
+- ALWAYS get paths from config, never hardcode
+- Use `sys.path.insert(0, ...)` for importing from parent directories
+
+```python
+# Good
+from src.config import get_config
+config = get_config()
+input_file = config.get_dataset_path('ml_data', 'processed')
+
+# Bad
+input_file = Path("../data/processed/ml_data.parquet")
+```
+
+### Function Documentation
+Use numpy-style docstrings:
+
+```python
+def load_and_process_data(
+    dataset_key: str,
+    missing_value: float = -999.0,
+    filter_invalid: bool = True
+) -> pd.DataFrame:
+    """
+    Load and process ML training data.
+
+    Parameters
+    ----------
+    dataset_key : str
+        Dataset key in config
+    missing_value : float, default=-999.0
+        Value representing missing data
+    filter_invalid : bool, default=True
+        Whether to filter invalid measurements
+
+    Returns
+    -------
+    pd.DataFrame
+        Processed data ready for ML
+
+    Examples
+    --------
+    >>> data = load_and_process_data('ml_training')
+    >>> print(data.shape)
+    (100000, 25)
+    """
+    pass
+```
+
+### Error Handling in Pipeline Steps
+```python
+class MyProcessingStep(PipelineStep):
+    def run(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        config = context['config']
+        input_file = config.get_dataset_path('input_data', 'raw')
+
+        # Check if file exists
+        if not input_file.exists():
+            self.logger.warning(f"Input file not found: {input_file}")
+            self.logger.info("Skipping step...")
+            context['step_skipped'] = True
+            return context
+
+        # Process data
+        # ...
+
+        return context
+```
+
+---
+
+## 8. Data Loading Patterns
+
+### Prefer Polars for Large Datasets
+```python
+import polars as pl
+
+# Polars is faster for large datasets
+data = pl.read_parquet(file_path)
+data = pl.read_csv(file_path)
+
+# Convert to pandas only when necessary
+data_pd = data.to_pandas()
+```
+
+### Use Appropriate Format
+- **Parquet**: Large tabular data (5-10x faster than CSV)
+- **CSV**: Small datasets, human-readable
+- **ECSV**: Astronomical data with metadata
+- **HDF5**: Very large numerical arrays
+
+---
+
+## 9. Model Management
+
+### Save Model Metadata
+```python
+import joblib
+import json
+from datetime import datetime
+
+# Create model ID with timestamp
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+model_id = f"rf_temperature_regressor_{timestamp}"
+
+# Save model
+models_dir = config.get_path('models', ensure_exists=True)
+model_file = models_dir / f"{model_id}.pkl"
+joblib.dump(model, model_file)
+
+# Save metadata
+metadata = {
+    'model_id': model_id,
+    'timestamp': timestamp,
+    'model_type': 'RandomForestRegressor',
+    'n_features': len(feature_cols),
+    'features': feature_cols,
+    'metrics': {
+        'mae': float(mae),
+        'rmse': float(rmse),
+        'r2': float(r2)
+    },
+    'hyperparameters': model.get_params()
+}
+
+metadata_file = models_dir / f"{model_id}_metadata.json"
+with open(metadata_file, 'w') as f:
+    json.dump(metadata, f, indent=2)
+```
+
+---
+
+## 10. Production Readiness Checklist
+
+Before releasing any ML project, ensure:
+
+- [ ] **Configuration**: All paths/parameters in `config/config.yaml`
+- [ ] **No Hardcoding**: No hardcoded paths, values, or parameters
+- [ ] **README**: Complete README with quick start and examples
+- [ ] **Requirements**: Pinned versions in `requirements.txt`
+- [ ] **Documentation**: API docs for all modules
+- [ ] **Pipeline**: Single command to run end-to-end (`python pipeline.py --all`)
+- [ ] **Logging**: Proper logging (not print statements)
+- [ ] **Error Handling**: Graceful failures with informative messages
+- [ ] **Tests**: Unit tests for critical functions
+- [ ] **Reproducibility**: Random seeds in config, same results every run
+- [ ] **CLAUDE.md**: Project instructions for AI assistants
+
+---
+
+## 11. Common Patterns Summary
+
+### Configuration
+```python
+from src.config import get_config
+config = get_config()
+path = config.get_dataset_path('key', 'location')
+param = config.get('section', 'key')
+```
+
+### Notebooks
+```python
+import sys
+sys.path.insert(0, '..')
+from src.notebook_utils import load_ml_data, save_figure, MISSING_VALUE
+from src.features import engineer_all_features
+
+data = load_ml_data(with_gaia=True)
+data_features = engineer_all_features(data, color_cols=['g_r', 'r_i'])
+save_figure(fig, 'analysis.png', subdir='exploratory')
+```
+
+### Pipeline Step
+```python
+class MyStep(PipelineStep):
+    def run(self, context):
+        config = context['config']
+        # logic here
+        context['result'] = ...
+        return context
+```
+
+### Pipeline Definition
+```python
+class MyPipeline(Pipeline):
+    def __init__(self):
+        steps = [Step1(), Step2(), Step3()]
+        super().__init__("My Pipeline", steps)
+
+# Usage
+pipeline = MyPipeline()
+context = pipeline.run()
+```
+
+---
+
+## 12. When to Use What
+
+- **Scripts**: One-off data processing tasks
+- **Notebooks**: Exploration, visualization, analysis
+- **Pipelines**: Automated workflows, reproducible execution
+- **Modules**: Reusable code used in multiple places
+
+---
+
+## Final Note
+
+The goal is **DRY (Don't Repeat Yourself)** and **portability**. Every piece of code should:
+1. Use configuration instead of hardcoding
+2. Be reusable (modules, not duplicated code)
+3. Be testable (small functions, clear interfaces)
+4. Be documented (docstrings, README, CLAUDE.md)
+5. Be production-ready (logging, error handling, CLI)
+
+Follow these patterns and your ML projects will be clean, maintainable, and production-ready.

@@ -51,6 +51,35 @@ pip install -r requirements.txt
 - `data/processed/gaia_eb_panstarrs_phot_with_temperatures.parquet` - Pan-STARRS photometry with effective temperatures (1.17M objects)
 - `data/processed/gaia_eb_sdss_teff.parquet` - SDSS photometry with effective temperatures
 - `data/processed/gaia_eb_colors_temperatures.parquet` - Multi-band colors (B-V, V-K) and temperatures
+- `data/processed/ml_training_data_clean.parquet` - Cleaned ML training dataset
+- `data/processed/ml_training_data_with_gaia.parquet` - ML dataset enhanced with Gaia colors
+
+## Pipelines
+
+**Automated Workflows** - See `docs/PIPELINES.md` for complete guide
+
+```bash
+# Run complete pipeline (data processing + ML training)
+python pipeline.py --all
+
+# Run data processing only
+python pipeline.py --data
+
+# Run ML training only
+python pipeline.py --ml
+
+# Custom model parameters
+python pipeline.py --ml --n-estimators 500 --max-depth 25
+
+# Dry run (see what would be executed)
+python pipeline.py --all --dry-run
+```
+
+**Pipeline Architecture**:
+- `src/pipeline/base.py` - Base pipeline classes
+- `src/pipeline/data_pipeline.py` - Data processing workflow
+- `src/pipeline/ml_pipeline.py` - ML training workflow
+- `pipeline.py` - Master orchestrator (CLI)
 
 ## Core Scripts and Usage
 
@@ -82,6 +111,15 @@ python scripts/calculate_temperatures.py
 
 # Add new colors (B-V, V-K) and temperatures to existing dataset
 python scripts/add_new_colors.py
+
+# Add Gaia colors (BP-RP) to ML training dataset
+python scripts/add_gaia_colors_to_ml_data.py
+```
+
+**System Monitoring**:
+```bash
+# Monitor memory usage during intensive training
+python scripts/memory_monitor.py --threshold 85 --check-interval 30 --process-name python
 ```
 
 **Jupyter Analysis**:
@@ -89,22 +127,38 @@ python scripts/add_new_colors.py
 # Start Jupyter for interactive analysis
 jupyter lab notebooks/
 
+# Template for new notebooks:
+# - examples/notebook_template.ipynb - Shows best practices with utilities
+
 # Analysis notebooks:
 # - eclipsing_binary_analysis.ipynb - Main analysis notebook
 # - sdss_temperature_analysis.ipynb - SDSS temperature analysis
 # - bv_vk_temperature_analysis.ipynb - B-V and V-K color-temperature analysis
 # - color_quality_analysis.ipynb - Color data quality assessment
+# - rf_regression_training.ipynb - Random Forest regression model training
+# - rf_temperature_prediction.ipynb - Temperature prediction using trained RF model
+# - rf_regression_feature_engineering.ipynb - Advanced RF model with feature engineering
+# - rf_classification_balanced_temp.ipynb - Temperature classification with balanced classes
+# - rf_classification_fixed_temp_bins.ipynb - Temperature classification with fixed bins
+# - hierarchical_clustering_hr.ipynb - HR diagram hierarchical clustering analysis
+
+# Note: All notebooks should be updated to use src/notebook_utils
+# See docs/NOTEBOOK_CONVERSION.md for migration guide
 ```
 
 ## Code Architecture
 
 **Module Structure**:
+- `src/config/` - Configuration management
+  - `settings.py` - Configuration API with auto-detection
 - `src/data/` - Data loading and caching utilities
   - `load_data.py` - Multi-format data loader (ECSV, Parquet, CSV)
   - `cache_manager.py` - Caching system for expensive computations
 - `src/visualization/` - Plotting and visualization functions
   - `plots.py` - Astronomical plots, sky maps, histograms
-- `src/features/` - Feature engineering (placeholder)
+- `src/features/` - Feature engineering utilities
+  - `engineering.py` - Reusable feature engineering functions
+- `src/notebook_utils.py` - Convenience functions for notebooks
 - `src/models/` - Machine learning models (placeholder)
 
 **Data Loading Pattern**:
@@ -145,6 +199,35 @@ cache = CacheManager()  # Uses data/cache/ by default
 **Photometric Data**: Pan-STARRS photometry accessed via MAST API
 **File Formats**: ECSV (Enhanced CSV) is the astronomical standard for tabular data
 
+## Configuration System
+
+**All scripts use centralized configuration** - no hardcoded paths!
+
+```python
+from src.config import get_config
+
+config = get_config()
+
+# Get paths
+data_dir = config.get_path('processed')
+input_file = config.get_dataset_path('eb_catalog', 'raw')
+
+# Get parameters
+missing_val = config.get('processing', 'missing_value')
+test_size = config.get('ml', 'test_size')
+```
+
+**Configuration file**: `config/config.yaml`
+- All paths (relative to project root)
+- Dataset filenames
+- Processing parameters
+- ML hyperparameters
+- Temperature coefficients
+
+**Documentation**: See `docs/CONFIGURATION.md` for complete API guide
+
+**Example**: Run `python examples/configuration_example.py` to see it in action
+
 ## Development Workflow
 
 **Working with Large Data**:
@@ -153,8 +236,33 @@ cache = CacheManager()  # Uses data/cache/ by default
 - Monitor memory usage when working with full dataset
 
 **Notebook Development**:
-- Primary analysis in `notebooks/eclipsing_binary_analysis.ipynb`
-- Keep notebooks focused on exploration; move production code to `src/`
+- **Use reusable modules** - See `NOTEBOOK_MODULES_README.md`
+- **No hardcoded paths** - Use `src/notebook_utils` functions
+- Start with template: `examples/notebook_template.ipynb`
+- See migration guide: `docs/NOTEBOOK_CONVERSION.md`
+
+**Notebook Setup (Standard)**:
+```python
+import sys
+sys.path.insert(0, '..')
+
+from src.notebook_utils import (
+    load_eb_catalog,
+    load_panstarrs_data,
+    load_ml_data,
+    save_figure,
+    MISSING_VALUE,
+    RANDOM_STATE
+)
+
+from src.features import engineer_all_features
+```
+
+**Adding New Scripts**:
+- Always use configuration system (see examples in `scripts/`)
+- Import: `from src.config import get_config`
+- Get paths: `config.get_dataset_path('key', 'location')`
+- Get params: `config.get('section', 'param')`
 
 ## Pan-STARRS Data Processing
 
@@ -171,6 +279,39 @@ cache = CacheManager()  # Uses data/cache/ by default
 - Filter encoding: "gr", "ri", "griz" etc. indicates available photometric bands
 - ~95% of objects have all three temperature estimates (Te_gr, Te_ri, Te_iz)
 
+## Machine Learning Models
+
+**Trained Models** (stored in `models/`):
+- Random Forest Temperature Regression models with versioned filenames
+- Each model includes: `.pkl` (model), `_metadata.json` (config), `_SUMMARY.txt` (performance), `_test_predictions.parquet` (predictions)
+
+**Model Performance**:
+- **Basic RF Model** (20251001_125556):
+  - Features: g-r, r-i, i-z colors, B-V synthetic color, g-band magnitude
+  - Test MAE: 576 K, RMSE: 983 K, R²: 0.52
+  - Objects within 10%: 65.52%
+
+- **Feature-Engineered RF Model** (20251002_210423):
+  - Features: 20 selected from 38 engineered features (polynomial, interactions, log transforms, temperature-dependent)
+  - Test MAE: 318 K, RMSE: 524 K, R²: 0.86
+  - **45% improvement** over basic model
+  - Objects within 10%: significantly improved
+
+**Model Usage**:
+```python
+import joblib
+import polars as pl
+
+# Load model and metadata
+model = joblib.load('models/rf_temperature_regressor_feature_engineering_20251002_210423.pkl')
+selector = joblib.load('models/rf_temperature_regressor_feature_engineering_20251002_210423_selector.pkl')
+
+# Load new data and predict
+data = pl.read_parquet('data/processed/ml_training_data_with_gaia.parquet')
+# ... feature engineering ...
+predictions = model.predict(selector.transform(features))
+```
+
 ## Directory Structure
 
 ```
@@ -182,7 +323,9 @@ cache = CacheManager()  # Uses data/cache/ by default
 │   ├── clean_panstarrs_photometry.py      # Clean and filter photometry data
 │   ├── calculate_temperatures.py          # Calculate effective temperatures
 │   ├── add_new_colors.py                  # Add B-V, V-K colors and temperatures
-│   └── add_colors_and_temperatures.py     # Alternative color/temperature script
+│   ├── add_colors_and_temperatures.py     # Alternative color/temperature script
+│   ├── add_gaia_colors_to_ml_data.py      # Add Gaia BP-RP colors to ML dataset
+│   └── memory_monitor.py                  # System memory monitoring for training
 ├── src/                        # Source code modules
 │   ├── data/                   # Data handling utilities
 │   │   ├── load_data.py       # Multi-format data loader
@@ -192,15 +335,27 @@ cache = CacheManager()  # Uses data/cache/ by default
 │   ├── features/              # Feature engineering (placeholder)
 │   └── models/                # Machine learning models (placeholder)
 ├── notebooks/                  # Jupyter notebooks
-│   ├── eclipsing_binary_analysis.ipynb     # Main analysis notebook
-│   ├── sdss_temperature_analysis.ipynb     # SDSS temperature analysis
-│   ├── bv_vk_temperature_analysis.ipynb    # B-V, V-K color analysis
-│   └── color_quality_analysis.ipynb        # Color data quality assessment
+│   ├── eclipsing_binary_analysis.ipynb          # Main analysis notebook
+│   ├── sdss_temperature_analysis.ipynb          # SDSS temperature analysis
+│   ├── bv_vk_temperature_analysis.ipynb         # B-V, V-K color analysis
+│   ├── color_quality_analysis.ipynb             # Color data quality assessment
+│   ├── rf_regression_training.ipynb             # Basic Random Forest model training
+│   ├── rf_temperature_prediction.ipynb          # RF temperature predictions
+│   ├── rf_regression_feature_engineering.ipynb  # Advanced RF with feature engineering
+│   ├── rf_classification_balanced_temp.ipynb    # Temperature classification (balanced)
+│   ├── rf_classification_fixed_temp_bins.ipynb  # Temperature classification (fixed bins)
+│   └── hierarchical_clustering_hr.ipynb         # HR diagram clustering analysis
+├── models/                     # Trained ML models
+│   ├── rf_temperature_regressor_*.pkl           # Random Forest models
+│   ├── rf_temperature_regressor_*_metadata.json # Model configurations
+│   ├── rf_temperature_regressor_*_SUMMARY.txt   # Performance summaries
+│   └── rf_temperature_regressor_*_test_predictions.parquet  # Test predictions
 ├── data/                       # Data storage
 │   ├── raw/                   # Original ECSV files
 │   ├── processed/             # Converted Parquet files
 │   ├── external/              # Third-party datasets
-│   └── interim/               # Intermediate processing
+│   ├── interim/               # Intermediate processing
+│   └── cache/                 # Computation cache
 ├── config/                     # Configuration files
 ├── docs/                       # Documentation
 ├── reports/                    # Generated reports
@@ -208,3 +363,69 @@ cache = CacheManager()  # Uses data/cache/ by default
 │   └── presentations/         # Presentation materials
 └── tests/                      # Unit tests
 ```
+
+---
+
+## ML Project Best Practices (from .cursorrules)
+
+This project follows production-ready ML patterns. For detailed guidelines on building similar projects, see `.cursorrules` in the project root.
+
+### Key Principles
+
+**1. Configuration-Driven Development**
+- All paths, parameters, and settings in `config/config.yaml`
+- No hardcoded values anywhere in code
+- Portable across environments and machines
+
+**2. DRY (Don't Repeat Yourself)**
+- Reusable modules in `src/` for common operations
+- Shared utilities in `src/notebook_utils.py` for notebooks
+- Feature engineering in `src/features/engineering.py`
+
+**3. Pipeline Orchestration**
+- Automated workflows with `pipeline.py`
+- Sequential step execution with timing and logging
+- Single command to reproduce entire analysis
+
+**4. Production Readiness**
+- Proper logging (not print statements)
+- Error handling with informative messages
+- Versioned models with metadata
+- Reproducible results (fixed random seeds)
+
+### Quick Reference Patterns
+
+**Configuration Usage**:
+```python
+from src.config import get_config
+config = get_config()
+path = config.get_dataset_path('dataset_key', 'location')
+param = config.get('section', 'parameter')
+```
+
+**Notebook Setup**:
+```python
+import sys
+sys.path.insert(0, '..')
+from src.notebook_utils import load_ml_data, save_figure, MISSING_VALUE
+from src.features import engineer_all_features
+
+data = load_ml_data(with_gaia=True)
+features = engineer_all_features(data, color_cols=['g_r', 'r_i'])
+save_figure(fig, 'analysis.png', subdir='exploratory')
+```
+
+**Pipeline Execution**:
+```bash
+# Complete workflow
+python pipeline.py --all
+
+# Individual pipelines
+python pipeline.py --data  # Data processing only
+python pipeline.py --ml    # ML training only
+
+# Custom parameters
+python pipeline.py --ml --n-estimators 500 --max-depth 25
+```
+
+For complete ML project patterns and templates, refer to `.cursorrules`.

@@ -9,35 +9,38 @@ This script uses vectorized operations for efficiency:
 4. Missing values are indicated by -999.0
 """
 
+import sys
 import polars as pl
 import numpy as np
-import sys
 from pathlib import Path
 
-def merge_duplicates_fast(input_file: str, output_file: str = None):
+# Add src to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from src.config import get_config
+
+
+def merge_duplicates_fast(input_file: Path, output_file: Path, missing_value: float = -999.0):
     """Efficiently merge duplicate original_ext_source_id entries."""
 
-    input_path = Path(input_file)
-    if not input_path.exists():
+    if not input_file.exists():
         print(f"Error: Input file {input_file} not found")
-        sys.exit(1)
+        return None
 
-    if output_file is None:
-        output_file = input_path.parent / f"{input_path.stem}_merged{input_path.suffix}"
-
-    print(f"Loading data from {input_file}...")
+    print(f"Loading data from {input_file.name}...")
     df = pl.read_csv(input_file)
 
     print(f"Total rows before merging: {len(df):,}")
     print(f"Unique source_ids: {df['original_ext_source_id'].n_unique():,}")
 
-    MISSING = -999.0
+    MISSING = missing_value
 
-    # Photometric columns and their errors
-    phot_columns = ['gPSFMag', 'rPSFMag', 'iPSFMag', 'zPSFMag', 'yPSFMag']
-    err_columns = ['gPSFMagErr', 'rPSFMagErr', 'iPSFMagErr', 'zPSFMagErr', 'yPSFMagErr']
+    # Get photometric columns from config
+    config = get_config()
+    phot_columns = config.get('processing', 'magnitude_columns')
+    err_columns = config.get('processing', 'error_columns')
 
-    print("Creating aggregation expressions...")
+    print("\nCreating aggregation expressions...")
 
     # Build aggregation expressions
     agg_exprs = []
@@ -99,8 +102,11 @@ def merge_duplicates_fast(input_file: str, output_file: str = None):
     # Sort by source_id
     merged_df = merged_df.sort('original_ext_source_id')
 
+    # Ensure output directory exists
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+
     # Save merged data
-    print(f"Saving merged data to {output_file}...")
+    print(f"\nSaving merged data to {output_file.name}...")
     merged_df.write_csv(output_file)
 
     # Print statistics
@@ -108,36 +114,44 @@ def merge_duplicates_fast(input_file: str, output_file: str = None):
     for phot_col in phot_columns:
         orig_missing = df.filter(pl.col(phot_col) == MISSING).height
         merged_missing = merged_df.filter(pl.col(phot_col) == MISSING).height
-        print(f"{phot_col}: {orig_missing:,} → {merged_missing:,} missing ({orig_missing - merged_missing:,} recovered)")
+        print(f"  {phot_col}: {orig_missing:,} → {merged_missing:,} missing ({orig_missing - merged_missing:,} recovered)")
 
-    return str(output_file)
+    return output_file
 
-def create_deduplicated_full_dataset(original_file: str, output_file: str = None):
-    """Create a deduplicated version of the full dataset."""
 
-    original_path = Path(original_file)
-    if output_file is None:
-        output_file = original_path.parent / f"{original_path.stem}_deduplicated{original_path.suffix}"
+def main():
+    """Main function."""
+    config = get_config()
 
-    print(f"Processing full dataset: {original_file}")
-    return merge_duplicates_fast(original_file, output_file)
+    print("=" * 70)
+    print("MERGE PAN-STARRS DUPLICATES (FAST)")
+    print("=" * 70)
+    print(f"Project root: {config.project_root}")
+    print()
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python merge_panstarrs_duplicates_fast.py <input_file> [output_file]")
-        print("       python merge_panstarrs_duplicates_fast.py --full <full_dataset_file> [output_file]")
+    # Get paths and parameters from config
+    input_file = config.get_dataset_path('panstarrs_duplicates', 'external')
+    output_file = config.get_dataset_path('panstarrs_duplicates_merged', 'external')
+    missing_value = config.get('processing', 'missing_value')
+
+    # Check if input exists
+    if not input_file.exists():
+        print(f"Error: Input file does not exist:")
+        print(f"  {input_file}")
+        print("\nTip: Run extract_panstarrs_duplicates.py first")
         sys.exit(1)
 
-    if sys.argv[1] == "--full":
-        if len(sys.argv) < 3:
-            print("Error: --full option requires input file")
-            sys.exit(1)
-        input_file = sys.argv[2]
-        output_file = sys.argv[3] if len(sys.argv) > 3 else None
-        result_file = create_deduplicated_full_dataset(input_file, output_file)
-    else:
-        input_file = sys.argv[1]
-        output_file = sys.argv[2] if len(sys.argv) > 2 else None
-        result_file = merge_duplicates_fast(input_file, output_file)
+    result_file = merge_duplicates_fast(input_file, output_file, missing_value)
 
-    print(f"\nDone! Merged data saved to: {result_file}")
+    if result_file:
+        print("\n" + "=" * 70)
+        print("✅ Duplicates merged successfully!")
+        print(f"Output: {result_file.relative_to(config.project_root)}")
+        print("=" * 70)
+    else:
+        print("\n❌ Merge failed!")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

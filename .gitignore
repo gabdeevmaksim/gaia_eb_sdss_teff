@@ -5,6 +5,10 @@ data/external/*
 data/interim/*
 !data/*/README.md
 
+# Model files (too large for GitHub)
+models/*.pkl
+models/*.parquet
+
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
 

@@ -8,6 +8,7 @@ notebook
 astropy
 polars
 pyarrow
+pyyaml
 healpy
 reproject
 aplpy

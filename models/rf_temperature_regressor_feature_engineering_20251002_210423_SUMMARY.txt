@@ -1,0 +1,82 @@
+================================================================================
+RANDOM FOREST TEMPERATURE REGRESSOR - FEATURE ENGINEERING
+================================================================================
+
+Model ID: rf_temperature_regressor_feature_engineering_20251002_210423
+Created: 2025-10-02 21:04:27
+
+PERFORMANCE METRICS:
+----------------------------------------
+MAE:  318 K
+RMSE: 524 K
+R²:   0.8645
+Relative Error: 5.5%
+
+COMPARISON WITH PREVIOUS MODEL:
+----------------------------------------
+Previous MAE: 579 K
+Current MAE:  318 K
+Improvement:  45.1%
+
+FEATURE ENGINEERING:
+----------------------------------------
+Basic colors: 5
+Polynomial features: 10
+Interaction features: 10
+Log features: 5
+Temperature-dependent: 6
+Magnitude features: 2
+Total engineered: 38
+Selected for training: 20
+
+SELECTED FEATURES:
+----------------------------------------
+ 1. g_r_color
+ 2. r_i_color
+ 3. B_V_color
+ 4. bp_rp
+ 5. bp_rp_squared
+ 6. bp_rp_cubed
+ 7. g_r_color_x_bp_rp
+ 8. r_i_color_x_bp_rp
+ 9. B_V_color_x_bp_rp
+10. log_g_r_color
+11. log_r_i_color
+12. log_B_V_color
+13. log_bp_rp
+14. hot_g_r
+15. hot_bp_rp
+16. cool_r_i
+17. cool_i_z
+18. mid_bp_rp
+19. g_mag
+20. g_mag_squared
+
+HYPERPARAMETERS:
+----------------------------------------
+bootstrap: True
+ccp_alpha: 0.0
+criterion: squared_error
+max_depth: 20
+max_features: log2
+max_leaf_nodes: None
+max_samples: None
+min_impurity_decrease: 0.0
+min_samples_leaf: 4
+min_samples_split: 5
+min_weight_fraction_leaf: 0.0
+monotonic_cst: None
+n_estimators: 300
+n_jobs: 12
+oob_score: False
+random_state: 42
+verbose: 0
+warm_start: False
+
+FILES SAVED:
+----------------------------------------
+Model: rf_temperature_regressor_feature_engineering_20251002_210423.pkl
+Selector: rf_temperature_regressor_feature_engineering_20251002_210423_selector.pkl
+Predictions: rf_temperature_regressor_feature_engineering_20251002_210423_test_predictions.parquet
+Metadata: rf_temperature_regressor_feature_engineering_20251002_210423_metadata.json
+Summary: rf_temperature_regressor_feature_engineering_20251002_210423_SUMMARY.txt
