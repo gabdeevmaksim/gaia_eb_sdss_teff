@@ -1,0 +1,76 @@
+{
+  "model_id": "rf_temperature_regressor_high_quality_20251013_105249",
+  "timestamp": "20251013_105249",
+  "model_type": "RandomForestRegressor",
+  "dataset": "high_quality_flag_1_only",
+  "training_samples": 335081,
+  "test_samples": 83771,
+  "n_features": 20,
+  "selected_features": [
+    "g_r_color",
+    "r_i_color",
+    "B_V_color",
+    "bp_rp",
+    "g_r_color_bp_rp",
+    "r_i_color_bp_rp",
+    "B_V_color_bp_rp",
+    "bp_rp^2",
+    "B_V_color_bp_rp^2",
+    "bp_rp^3",
+    "g_r_color_x_bp_rp",
+    "r_i_color_x_bp_rp",
+    "B_V_color_x_bp_rp",
+    "log_g_r_color",
+    "log_r_i_color",
+    "log_B_V_color",
+    "log_bp_rp",
+    "cool_g_r_color",
+    "cool_B_V_color",
+    "cool_bp_rp"
+  ],
+  "hyperparameters": {
+    "n_estimators": 300,
+    "max_depth": 20,
+    "min_samples_leaf": 4,
+    "min_samples_split": 5,
+    "random_state": 42,
+    "n_jobs": -1
+  },
+  "performance_metrics": {
+    "train_mae": 223.21437543338945,
+    "train_rmse": 296.2125643876146,
+    "train_r2": 0.8115171928917579,
+    "test_mae": 264.5523348506884,
+    "test_rmse": 348.8474950464878,
+    "test_r2": 0.738779247846831,
+    "relative_error_percent": 5.505921840667725
+  },
+  "feature_engineering": {
+    "color_features": [
+      "g_r_color",
+      "r_i_color",
+      "i_z_color",
+      "B_V_color",
+      "bp_rp"
+    ],
+    "polynomial_features": true,
+    "interaction_features": true,
+    "log_features": true,
+    "temperature_dependent_features": true,
+    "magnitude_features": false
+  },
+  "data_info": {
+    "input_file": "/Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/data/processed/ml_training_data_high_quality.parquet",
+    "total_samples": 418852,
+    "temperature_range": [
+      2737.304443359375,
+      21906.275390625
+    ],
+    "feature_selection_method": "SelectKBest_f_regression",
+    "n_features_selected": 20
+  },
+  "training_info": {
+    "training_time_seconds": 458.856404,
+    "test_size": 0.2
+  }
+}

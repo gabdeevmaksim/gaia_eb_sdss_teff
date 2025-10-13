@@ -53,6 +53,11 @@ pip install -r requirements.txt
 - `data/processed/gaia_eb_colors_temperatures.parquet` - Multi-band colors (B-V, V-K) and temperatures
 - `data/processed/ml_training_data_clean.parquet` - Cleaned ML training dataset
 - `data/processed/ml_training_data_with_gaia.parquet` - ML dataset enhanced with Gaia colors
+- `data/processed/ml_training_data_with_gaia_with_flags.parquet` - ML dataset with Gaia GSP-Phot quality flags
+- `data/processed/ml_training_data_high_quality.parquet` - High-quality dataset (flag 1 only, no magnitude features)
+- `data/processed/flag0_temperature_predictions.parquet` - Temperature predictions for flag 0 sources
+- `data/processed/apogee_validated_predictions.parquet` - Predictions validated against APOGEE DR17 spectroscopy
+- `data/processed/galah_validated_predictions.parquet` - Predictions validated against GALAH DR3 spectroscopy
 
 ## Pipelines
 
@@ -116,6 +121,33 @@ python scripts/add_new_colors.py
 python scripts/add_gaia_colors_to_ml_data.py
 ```
 
+**Quality Flag Processing and High-Quality Model Training**:
+```bash
+# Add Gaia GSP-Phot quality flags to ML training data
+python scripts/add_gaia_quality_flags.py
+
+# Create high-quality dataset (flag 1 sources only, no magnitude features)
+python scripts/create_high_quality_ml_dataset.py
+
+# Train Random Forest model on high-quality data
+python scripts/train_high_quality_model.py
+
+# Predict temperatures for flag 0 sources using high-quality model
+python scripts/predict_flag0_temperatures.py
+```
+
+**Spectroscopic Validation**:
+```bash
+# Download APOGEE DR17 and GALAH DR3 spectroscopic catalogs
+python scripts/download_spectroscopic_catalogs.py
+
+# Cross-match predictions with APOGEE DR17 for validation
+python scripts/crossmatch_apogee_local.py
+
+# Cross-match predictions with GALAH DR3 using VizieR Xmatch
+python scripts/crossmatch_galah_xmatch.py
+```
+
 **System Monitoring**:
 ```bash
 # Monitor memory usage during intensive training
@@ -135,6 +167,7 @@ jupyter lab notebooks/
 # - sdss_temperature_analysis.ipynb - SDSS temperature analysis
 # - bv_vk_temperature_analysis.ipynb - B-V and V-K color-temperature analysis
 # - color_quality_analysis.ipynb - Color data quality assessment
+# - gaia_quality_flag_analysis.ipynb - Gaia GSP-Phot quality flag analysis and comparison
 # - rf_regression_training.ipynb - Random Forest regression model training
 # - rf_temperature_prediction.ipynb - Temperature prediction using trained RF model
 # - rf_regression_feature_engineering.ipynb - Advanced RF model with feature engineering
@@ -325,6 +358,13 @@ predictions = model.predict(selector.transform(features))
 │   ├── add_new_colors.py                  # Add B-V, V-K colors and temperatures
 │   ├── add_colors_and_temperatures.py     # Alternative color/temperature script
 │   ├── add_gaia_colors_to_ml_data.py      # Add Gaia BP-RP colors to ML dataset
+│   ├── add_gaia_quality_flags.py          # Add Gaia GSP-Phot quality flags
+│   ├── create_high_quality_ml_dataset.py  # Create flag 1 only dataset
+│   ├── train_high_quality_model.py        # Train RF model on high-quality data
+│   ├── predict_flag0_temperatures.py      # Predict temperatures for flag 0 sources
+│   ├── download_spectroscopic_catalogs.py # Download APOGEE/GALAH catalogs
+│   ├── crossmatch_apogee_local.py         # Validate with APOGEE DR17
+│   ├── crossmatch_galah_xmatch.py         # Validate with GALAH DR3
 │   └── memory_monitor.py                  # System memory monitoring for training
 ├── src/                        # Source code modules
 │   ├── data/                   # Data handling utilities
@@ -339,6 +379,7 @@ predictions = model.predict(selector.transform(features))
 │   ├── sdss_temperature_analysis.ipynb          # SDSS temperature analysis
 │   ├── bv_vk_temperature_analysis.ipynb         # B-V, V-K color analysis
 │   ├── color_quality_analysis.ipynb             # Color data quality assessment
+│   ├── gaia_quality_flag_analysis.ipynb         # Gaia GSP-Phot quality flag analysis
 │   ├── rf_regression_training.ipynb             # Basic Random Forest model training
 │   ├── rf_temperature_prediction.ipynb          # RF temperature predictions
 │   ├── rf_regression_feature_engineering.ipynb  # Advanced RF with feature engineering

@@ -106,7 +106,7 @@ def create_log_features(
     """
     Create logarithmic features from colors.
 
-    Adds an offset to handle negative colors.
+    Adds an offset to handle negative colors and replaces NaN with 0.
 
     Parameters
     ----------
@@ -130,7 +130,9 @@ def create_log_features(
 
     for col in color_cols:
         log_name = f"log_{col}"
-        df_log[log_name] = np.log(df[col] + offset)
+        # Add offset and take log, then replace any NaN with 0
+        log_values = np.log(df[col] + offset)
+        df_log[log_name] = log_values.fillna(0)
 
     return df_log
 

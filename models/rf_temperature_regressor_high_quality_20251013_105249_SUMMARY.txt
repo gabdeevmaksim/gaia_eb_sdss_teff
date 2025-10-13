@@ -1,0 +1,45 @@
+RANDOM FOREST TEMPERATURE REGRESSOR - HIGH QUALITY MODEL
+============================================================
+
+Model ID: rf_temperature_regressor_high_quality_20251013_105249
+Timestamp: 20251013_105249
+Dataset: High-quality sources only (flag 1)
+Training samples: 335,081
+Test samples: 83,771
+Features: 20
+
+PERFORMANCE METRICS:
+  Test MAE:  264.6 K
+  Test RMSE: 348.8 K
+  Test R²:   0.739
+  Relative error: 5.51%
+
+HYPERPARAMETERS:
+  n_estimators: 300
+  max_depth: 20
+  min_samples_leaf: 4
+  min_samples_split: 5
+
+SELECTED FEATURES:
+   1. g_r_color
+   2. r_i_color
+   3. B_V_color
+   4. bp_rp
+   5. g_r_color_bp_rp
+   6. r_i_color_bp_rp
+   7. B_V_color_bp_rp
+   8. bp_rp^2
+   9. B_V_color_bp_rp^2
+  10. bp_rp^3
+  11. g_r_color_x_bp_rp
+  12. r_i_color_x_bp_rp
+  13. B_V_color_x_bp_rp
+  14. log_g_r_color
+  15. log_r_i_color
+  16. log_B_V_color
+  17. log_bp_rp
+  18. cool_g_r_color
+  19. cool_B_V_color
+  20. cool_bp_rp
+
+Training time: 458.9 seconds

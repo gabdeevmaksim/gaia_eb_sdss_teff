@@ -32,6 +32,11 @@ datasets:
   colors_temps: gaia_eb_colors_temperatures.parquet
   ml_training_clean: ml_training_data_clean.parquet
   ml_training_with_gaia: ml_training_data_with_gaia.parquet
+  ml_training_with_flags: ml_training_data_with_gaia_with_flags.parquet
+  ml_training_high_quality: ml_training_data_high_quality.parquet
+  flag0_predictions: flag0_temperature_predictions.parquet
+  apogee_validated: apogee_validated_predictions.parquet
+  galah_validated: galah_validated_predictions.parquet
 
 # Data processing parameters
 processing:
