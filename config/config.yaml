@@ -16,6 +16,7 @@ paths:
 datasets:
   # Raw data
   eb_catalog: eb_panstarrs_with_param-result.ecsv
+  eb_tmass_ids: eb_with_tmass_ids-result.ecsv
 
   # External data (Pan-STARRS photometry)
   panstarrs_phot: gaia_eb_panstarrs_phot_Dedulek.csv
@@ -37,6 +38,9 @@ datasets:
   flag0_predictions: flag0_temperature_predictions.parquet
   apogee_validated: apogee_validated_predictions.parquet
   galah_validated: galah_validated_predictions.parquet
+  eb_2mass_photometry: eb_2mass_photometry.parquet
+  eb_full_catalog_temps: eb_full_catalog_temperatures.parquet
+  stars_types_with_predictions: stars_types_with_predictions.parquet
 
 # Data processing parameters
 processing:

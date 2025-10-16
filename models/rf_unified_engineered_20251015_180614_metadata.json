@@ -1,0 +1,81 @@
+{
+  "model_id": "rf_unified_engineered_20251015_180614",
+  "timestamp": "20251015_180614",
+  "model_type": "RandomForestRegressor",
+  "dataset_type": "unified_features_engineered",
+  "training_samples": 576004,
+  "test_samples": 144001,
+  "total_features": 86,
+  "selected_features": [
+    "g_r_color",
+    "r_i_color",
+    "i_z_color",
+    "gPSFMag",
+    "bp_rp",
+    "bp_rp^2",
+    "bp_rp^3",
+    "log_g_r_color",
+    "log_r_i_color",
+    "log_i_z_color",
+    "log_B_V_color",
+    "log_bp_rp",
+    "cool_g_r_color",
+    "cool_r_i_color",
+    "mid_r_i_color",
+    "mid_i_z_color",
+    "cool_B_V_color",
+    "mid_B_V_color",
+    "cool_bp_rp",
+    "mid_bp_rp"
+  ],
+  "n_features_selected": 20,
+  "hyperparameters": {
+    "n_estimators": 300,
+    "max_depth": 20,
+    "min_samples_leaf": 4,
+    "min_samples_split": 5,
+    "random_state": 42,
+    "n_jobs": -1,
+    "n_features_select": 20
+  },
+  "performance_metrics": {
+    "train": {
+      "mae": 434.8024022174269,
+      "rmse": 756.5787158195808,
+      "r2": 0.7188746858878585
+    },
+    "test": {
+      "mae": 550.8015357808894,
+      "rmse": 958.9595380096996,
+      "r2": 0.5431627106399162,
+      "mean_error_pct": 9.293037688613648,
+      "median_error_pct": 5.916810258888253,
+      "within_5pct": 64771,
+      "within_10pct": 96205,
+      "within_20pct": 126223
+    }
+  },
+  "training_time_seconds": 810.914206,
+  "feature_importances": {
+    "gPSFMag": 0.5711919096664212,
+    "bp_rp^3": 0.05695928671995333,
+    "bp_rp^2": 0.05078439038078049,
+    "bp_rp": 0.04945300386964495,
+    "log_bp_rp": 0.04550633274601967,
+    "i_z_color": 0.03363409829462642,
+    "log_i_z_color": 0.02648929876408308,
+    "r_i_color": 0.024487552067529943,
+    "log_r_i_color": 0.022296156716613114,
+    "log_g_r_color": 0.018733741179191087,
+    "cool_bp_rp": 0.018570590965026203,
+    "g_r_color": 0.014287390855237348,
+    "log_B_V_color": 0.014065332137773645,
+    "mid_r_i_color": 0.01209035566259185,
+    "mid_i_z_color": 0.010090764323486342,
+    "cool_B_V_color": 0.008465003548746979,
+    "mid_B_V_color": 0.007552315986025582,
+    "mid_bp_rp": 0.006324208133007638,
+    "cool_g_r_color": 0.006256615205740628,
+    "cool_r_i_color": 0.0027616527775004792
+  }
+}

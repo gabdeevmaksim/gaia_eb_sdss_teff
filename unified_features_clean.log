@@ -1,0 +1,103 @@
+09:59:18 - INFO - ================================================================================
+09:59:18 - INFO - CREATE UNIFIED FEATURE DATASET
+09:59:18 - INFO - ================================================================================
+09:59:18 - INFO - Model type: engineered
+09:59:18 - INFO - Missing value marker: -999.0
+09:59:18 - INFO - 
+09:59:18 - INFO - Loading complete dataset...
+09:59:18 - INFO -   Loaded 1,172,580 objects
+09:59:18 - INFO -   Columns: ['original_ext_source_id', 'gaia_source_id', 'g_r_color', 'r_i_color', 'i_z_color', 'gPSFMag', 'teff_gspphot', 'Te_gr', 'Te_ri', 'Te_iz', 'B_V_color']
+09:59:18 - WARNING -   bp_rp not found - loading from Gaia catalog
+09:59:19 - INFO -   Added bp_rp: 1,157,900 objects have values
+09:59:19 - INFO -   Filled 14,770 missing bp_rp values with 0
+09:59:19 - INFO - 
+Data coverage:
+09:59:19 - INFO -   Total objects: 1,172,670
+09:59:19 - INFO -   With teff_gspphot: 720,005 (61.4%)
+09:59:19 - INFO -   Without teff_gspphot: 452,665 (38.6%)
+09:59:19 - INFO - 
+Input feature availability (before cleaning):
+09:59:19 - INFO -   g_r_color: 1,172,670 (100.0%)
+09:59:19 - INFO -   r_i_color: 1,172,670 (100.0%)
+09:59:19 - INFO -   i_z_color: 1,172,670 (100.0%)
+09:59:19 - INFO -   B_V_color: 1,172,670 (100.0%)
+09:59:19 - INFO -   bp_rp: 1,172,670 (100.0%)
+09:59:19 - INFO -   gPSFMag: 1,172,670 (100.0%)
+09:59:19 - INFO - 
+Cleaning outliers in base features...
+09:59:19 - INFO -   g_r_color: removed 18,900 outliers outside [-0.5, 3.0]
+09:59:19 - INFO -   r_i_color: removed 40,889 outliers outside [-0.5, 2.0]
+09:59:19 - INFO -   i_z_color: removed 40,367 outliers outside [-0.5, 1.5]
+09:59:19 - INFO -   B_V_color: removed 19,065 outliers outside [-0.5, 3.0]
+09:59:19 - INFO -   bp_rp: removed 965 outliers outside [-0.5, 4.0]
+09:59:19 - INFO -   gPSFMag: removed 7,782 outliers outside [10.0, 25.0]
+09:59:19 - INFO -   Total outliers removed: 127,968
+09:59:19 - INFO - 
+Removing objects with insufficient data...
+09:59:19 - INFO -   Removed 58,645 objects with missing required colors
+09:59:19 - INFO -   Remaining: 1,114,025 objects
+09:59:19 - INFO - 
+Engineering features (model_type: engineered)...
+09:59:19 - INFO -   Using ENGINEERED feature engineering:
+09:59:19 - INFO -     - Polynomial features (degree 3)
+09:59:19 - INFO -     - Interaction features
+09:59:19 - INFO -     - Log features
+09:59:19 - INFO -     - Temperature-dependent features
+09:59:19 - INFO -     - NO magnitude features (avoiding bias)
+09:59:19 - INFO -     - Color features: ['g_r_color', 'r_i_color', 'i_z_color', 'B_V_color', 'bp_rp']
+Traceback (most recent call last):
+  File "/Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/scripts/create_unified_feature_dataset.py", line 607, in <module>
+    main()
+    ~~~~^^
+  File "/Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/scripts/create_unified_feature_dataset.py", line 505, in main
+    df_features = engineer_features_unified(
+        df_all,
+        model_type=args.model_type,
+        missing_value=args.missing_value
+    )
+  File "/Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/scripts/create_unified_feature_dataset.py", line 218, in engineer_features_unified
+    df_features = engineer_all_features(
+        df,
+    ...<6 lines>...
+        include_mag_features=False
+    )
+  File "/Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/src/features/engineering.py", line 276, in engineer_all_features
+    df_eng = create_polynomial_features(df_eng, color_cols, degree=3)
+  File "/Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/src/features/engineering.py", line 52, in create_polynomial_features
+    poly_features = poly.fit_transform(df[color_cols])
+  File "/Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/.venv/lib/python3.13/site-packages/sklearn/utils/_set_output.py", line 316, in wrapped
+    data_to_wrap = f(self, X, *args, **kwargs)
+  File "/Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/.venv/lib/python3.13/site-packages/sklearn/base.py", line 894, in fit_transform
+    return self.fit(X, **fit_params).transform(X)
+           ~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/.venv/lib/python3.13/site-packages/sklearn/base.py", line 1365, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+  File "/Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/.venv/lib/python3.13/site-packages/sklearn/preprocessing/_polynomial.py", line 309, in fit
+    _, n_features = validate_data(self, X, accept_sparse=True).shape
+                    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/.venv/lib/python3.13/site-packages/sklearn/utils/validation.py", line 2954, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+  File "/Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/.venv/lib/python3.13/site-packages/sklearn/utils/validation.py", line 1105, in check_array
+    _assert_all_finite(
+    ~~~~~~~~~~~~~~~~~~^
+        array,
+        ^^^^^^
+    ...<2 lines>...
+        allow_nan=ensure_all_finite == "allow-nan",
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/.venv/lib/python3.13/site-packages/sklearn/utils/validation.py", line 120, in _assert_all_finite
+    _assert_all_finite_element_wise(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        X,
+        ^^
+    ...<4 lines>...
+        input_name=input_name,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/.venv/lib/python3.13/site-packages/sklearn/utils/validation.py", line 169, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+PolynomialFeatures does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values

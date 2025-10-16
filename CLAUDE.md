@@ -6,6 +6,217 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is an astronomical data science project for analyzing eclipsing binary stars using Gaia, Pan-STARRS, and SDSS data. The project focuses on effective temperature (Teff) analysis of eclipsing binaries with a ~1.2 million row catalog dataset.
 
+## Naming Conventions
+
+This project follows consistent naming conventions across all files to ensure clarity and maintainability.
+
+### Python Files (Scripts and Modules)
+
+**Scripts** (`scripts/`):
+- Use `snake_case` for all script filenames
+- Name describes the action performed (verb-based)
+- Format: `{action}_{object}_{modifier}.py`
+- Examples:
+  - `convert_ecsv_to_parquet.py` - Converts ECSV files to Parquet format
+  - `extract_panstarrs_duplicates.py` - Extracts duplicate Pan-STARRS entries
+  - `add_gaia_colors_to_ml_data.py` - Adds Gaia colors to ML data
+  - `train_high_quality_model.py` - Trains model on high-quality data
+  - `crossmatch_apogee_local.py` - Cross-matches with APOGEE catalog
+  - `query_2mass_irsa.py` - Queries 2MASS via IRSA service
+
+**Source Modules** (`src/`):
+- Use `snake_case` for all module filenames
+- Name describes the content/purpose (noun-based)
+- Avoid abbreviations unless standard in astronomy (e.g., `eb` for eclipsing binary)
+- Examples:
+  - `load_data.py` - Data loading utilities
+  - `cache_manager.py` - Caching system manager
+  - `settings.py` - Configuration settings
+  - `engineering.py` - Feature engineering functions
+  - `notebook_utils.py` - Notebook convenience functions
+
+**Module Organization**:
+- Each module should have a single, clear responsibility
+- Use `__init__.py` to expose public API
+- Private functions start with underscore (`_helper_function`)
+
+### Jupyter Notebooks
+
+**Naming Pattern**:
+- Use `snake_case` for all notebook filenames
+- Name describes the analysis type and subject
+- Format: `{subject}_{analysis_type}.ipynb` OR `{model}_{task}_{variant}.ipynb`
+- Examples:
+  - `eclipsing_binary_analysis.ipynb` - General EB analysis
+  - `sdss_temperature_analysis.ipynb` - Temperature analysis using SDSS
+  - `bv_vk_temperature_analysis.ipynb` - Color-temperature analysis
+  - `gaia_quality_flag_analysis.ipynb` - Quality flag analysis
+  - `rf_regression_training.ipynb` - Random Forest regression training
+  - `rf_classification_balanced_temp.ipynb` - RF classification with balanced classes
+  - `hierarchical_clustering_hr.ipynb` - Hierarchical clustering on HR diagram
+
+**Notebook Organization**:
+- Analysis notebooks: `{data_source}_{analysis_focus}.ipynb`
+- ML model notebooks: `{model_type}_{task}_{variant}.ipynb`
+- Exploratory notebooks: `exploratory_{topic}.ipynb` (delete when done or move to archive)
+
+### Data Files
+
+**Raw Data** (`data/raw/`):
+- Preserve original filenames from data sources (e.g., `eb_panstarrs_with_param-result.ecsv`)
+- Use astronomy standard formats (ECSV, FITS)
+- Include provenance in filename when possible
+
+**Processed Data** (`data/processed/`):
+- Use `snake_case` with descriptive names
+- Include data content and processing stage
+- Format: `{source}_{content}_{stage}.{ext}`
+- Examples:
+  - `eb_catalog.parquet` - Main eclipsing binary catalog
+  - `eb_catalog_with_pm.parquet` - Catalog with proper motion
+  - `gaia_eb_panstarrs_phot_with_temperatures.parquet` - Pan-STARRS photometry with Teff
+  - `ml_training_data_clean.parquet` - Cleaned ML training data
+  - `ml_training_data_with_gaia.parquet` - ML data with Gaia colors
+  - `ml_training_data_high_quality.parquet` - High-quality subset
+  - `flag0_temperature_predictions.parquet` - Predictions for flag 0 sources
+  - `apogee_validated_predictions.parquet` - Predictions validated with APOGEE
+
+**Companion Files**:
+- Summary files: `{dataset_name}_SUMMARY.txt` (uppercase for visibility)
+- Metadata files: `{dataset_name}_metadata.json`
+- Backup files: `{dataset_name}_backup.parquet` (temporary, should be deleted)
+
+**File Extensions**:
+- `.parquet` - Processed tabular data (preferred for performance)
+- `.csv` - Simple tabular exports
+- `.ecsv` - Astronomy standard Enhanced CSV with metadata
+- `.dat` - Legacy format compatibility (e.g., for external software)
+- `.fits` - FITS images and tables (astronomy standard)
+
+### Machine Learning Models
+
+**Model Files** (`models/`):
+- Format: `{model_type}_{task}_{variant}_{timestamp}.{ext}`
+- Timestamp: `YYYYMMDD_HHMMSS` format
+- Examples:
+  - `rf_temperature_regressor_20251001_125556.pkl` - Basic RF model
+  - `rf_temperature_regressor_feature_engineering_20251002_210423.pkl` - Enhanced model
+  - `rf_temperature_regressor_high_quality_20251013_105249.pkl` - High-quality data model
+
+**Model Artifacts** (same base name as model):
+- `.pkl` - Serialized model (primary)
+- `_metadata.json` - Model configuration and parameters
+- `_SUMMARY.txt` - Performance metrics and training summary (uppercase for visibility)
+- `_test_predictions.parquet` - Test set predictions for validation
+- `_selector.pkl` - Feature selector (if applicable)
+
+**Versioning Strategy**:
+- Never overwrite existing models - always create new timestamped versions
+- Keep at least 3 most recent versions of each model type
+- Document major model changes in `_metadata.json`
+
+### Documentation Files
+
+**Documentation** (`docs/`):
+- Use `UPPER_SNAKE_CASE.md` for major documentation (stands out in listings)
+- Use sentence case for topic-specific guides
+- Format: `{TOPIC}_{SUBTOPIC}.md` or `{topic}_guide.md`
+- Examples:
+  - `CONFIGURATION.md` - Configuration system documentation
+  - `PIPELINES.md` - Pipeline documentation
+  - `NOTEBOOK_CONVERSION.md` - Notebook best practices
+  - `AI_TEMPERATURE_PREDICTION_RESEARCH.md` - Research notes
+  - `FEATURE_PREPARATION_FOR_PREDICTION.md` - Feature engineering guide
+
+**Special Documentation**:
+- `README.md` - Project overview (repository root)
+- `CLAUDE.md` - AI assistant guidelines (repository root)
+- `CHANGELOG.md` - Version history (if applicable)
+- `LICENSE` - License file (no extension)
+
+### Configuration Files
+
+**Configuration** (`config/`):
+- Use `snake_case.yaml` or `snake_case.json`
+- Main config: `config.yaml`
+- Environment-specific: `config_{env}.yaml` (e.g., `config_dev.yaml`, `config_prod.yaml`)
+
+**Project Metadata**:
+- `requirements.txt` - Python dependencies
+- `pyproject.toml` - Modern Python project configuration
+- `.gitignore` - Git ignore patterns
+- `.cursorrules` - AI assistant rules (project-specific)
+
+### Report and Figure Files
+
+**Figures** (`reports/figures/`):
+- Use `snake_case` for figure filenames
+- Include analysis type and subject
+- Organize in subdirectories by analysis category
+- Format: `{analysis}_{subject}_{variant}.{ext}`
+- Examples:
+  - `hr_diagram_all_sources.png`
+  - `temperature_distribution_by_filter.png`
+  - `color_color_diagram_griz.png`
+  - `validation/apogee_comparison_scatter.png`
+  - `validation/galah_residuals_histogram.png`
+
+**Figure Organization**:
+- Group by analysis type in subdirectories: `exploratory/`, `validation/`, `modeling/`, `publication/`
+- Use high-quality formats: `.png` (default), `.pdf` (publication), `.svg` (vector)
+
+### Variable and Column Naming
+
+**Code Variables**:
+- `snake_case` for all variables and functions
+- Descriptive names, avoid single letters except iterators (`i`, `j`) or astronomy conventions (`g`, `r`, `i` for bands)
+- Examples: `temperature_kelvin`, `source_id`, `mag_error`, `color_index`
+
+**DataFrame Columns**:
+- `snake_case` for all column names
+- Use astronomy standard abbreviations when appropriate
+- Examples:
+  - Magnitudes: `g_mag`, `r_mag`, `i_mag`, `z_mag`
+  - Colors: `g_r`, `r_i`, `bp_rp` (band1_band2 format)
+  - Temperatures: `teff_gspphot`, `teff_predicted`, `teff_apogee`
+  - Errors: `g_mag_error`, `pmra_error`
+  - IDs: `source_id`, `designation`, `tmass_id`
+  - Flags: `flag_quality`, `flag_duplicated`
+
+**Constants**:
+- `UPPER_SNAKE_CASE` for constants
+- Examples: `MISSING_VALUE`, `RANDOM_STATE`, `TEST_SIZE`
+
+### Astronomy-Specific Conventions
+
+**Photometric Bands**:
+- Use lowercase for band names: `g`, `r`, `i`, `z`, `y` (Pan-STARRS/SDSS)
+- Colors as band pairs: `g_r`, `r_i`, `i_z` (no spaces or dashes)
+- 2MASS bands: `j`, `h`, `k` or `J`, `H`, `K` (preserve source convention)
+- Gaia bands: `bp`, `rp`, `g_gaia` (lowercase, underscore for clarity)
+
+**Astronomical Objects**:
+- `eb` - Eclipsing binary
+- `wd` - White dwarf
+- `ms` - Main sequence
+- `rg` - Red giant
+- Full words preferred in documentation and user-facing names
+
+**Catalogs**:
+- Use standard abbreviations: `gaia`, `panstarrs`, `sdss`, `2mass`, `apogee`, `galah`
+- Version when relevant: `gaia_dr3`, `apogee_dr17`, `galah_dr3`
+
+### General Naming Principles
+
+1. **Be Descriptive**: Names should clearly indicate purpose without needing comments
+2. **Be Consistent**: Use the same naming pattern for similar items
+3. **Be Concise**: Avoid unnecessary words, but don't sacrifice clarity
+4. **Avoid Abbreviations**: Except for standard astronomy terms or very common abbreviations
+5. **Use Astronomy Standards**: Follow IAU and VO conventions when applicable
+6. **No Special Characters**: Avoid spaces, hyphens in code (use underscores), except in data filenames from external sources
+7. **Lowercase Preferred**: Except for constants, classes (PascalCase), and special documentation files
+8. **Timestamps**: Use ISO format `YYYYMMDD_HHMMSS` for versioned files
+
 ## Environment Setup
 
 **Virtual Environment**: Use `.venv/` directory (not `venv/`)
@@ -25,6 +236,8 @@ pip install -r requirements.txt
 - `healpy` - HEALPix sky mapping
 - `aplpy` - Astronomical plotting
 - `reproject` - Astronomical image reprojection
+- `pyvo` - Virtual Observatory access
+- `astroquery` - Astronomical catalog queries (2MASS, etc.)
 - `numpy` - Numerical computing foundation
 - `matplotlib` - Basic plotting
 - `seaborn` - Statistical visualization
@@ -40,15 +253,21 @@ pip install -r requirements.txt
 - Interim data in `data/interim/` for intermediate processing steps
 - Cache system in `data/cache/` for expensive computations
 
-**Primary Dataset**: `data/raw/eb_panstarrs_with_param-result.ecsv`
-- Eclipsing binary catalog with Pan-STARRS photometry
-- Use `scripts/convert_ecsv_to_parquet.py` to convert for performance
+**Primary Datasets**:
+- `data/raw/eb_panstarrs_with_param-result.ecsv` - Eclipsing binary catalog with Pan-STARRS photometry
+- `data/raw/stars_types.dat` - Stellar classification catalog (2.1M eclipsing binaries)
+  - Contains: Gaia source_id, coordinates, period, Teff (58% have values), binary type (detached/overcontact), amplitude
+  - Missing Teff values marked as `--`
+  - Used as base catalog for temperature prediction
+- `data/raw/eb_with_tmass_ids-result.ecsv` - Eclipsing binaries with 2MASS cross-match IDs
+- Use `scripts/convert_ecsv_to_parquet.py` to convert ECSV files for performance
 
 **Current Processed Files**:
-- `data/processed/eb_catalog.parquet` - Main catalog (82MB)
+- `data/processed/eb_catalog.parquet` - Main eclipsing binary catalog (82MB)
 - `data/processed/eb_catalog_with_pm.parquet` - Catalog with proper motion (92MB)
 - `data/processed/original_ext_source_id.csv` - Extracted source IDs (23MB)
 - `data/processed/gaia_eb_panstarrs_phot_with_temperatures.parquet` - Pan-STARRS photometry with effective temperatures (1.17M objects)
+- `data/processed/gaia_eb_panstarrs_phot_with_temperatures_and_flags.parquet` - Pan-STARRS photometry with temperatures and quality flags
 - `data/processed/gaia_eb_sdss_teff.parquet` - SDSS photometry with effective temperatures
 - `data/processed/gaia_eb_colors_temperatures.parquet` - Multi-band colors (B-V, V-K) and temperatures
 - `data/processed/ml_training_data_clean.parquet` - Cleaned ML training dataset
@@ -57,7 +276,16 @@ pip install -r requirements.txt
 - `data/processed/ml_training_data_high_quality.parquet` - High-quality dataset (flag 1 only, no magnitude features)
 - `data/processed/flag0_temperature_predictions.parquet` - Temperature predictions for flag 0 sources
 - `data/processed/apogee_validated_predictions.parquet` - Predictions validated against APOGEE DR17 spectroscopy
+- `data/processed/apogee_xmatch.parquet` - APOGEE cross-match results
 - `data/processed/galah_validated_predictions.parquet` - Predictions validated against GALAH DR3 spectroscopy
+- `data/processed/eb_2mass_photometry.parquet` - 2MASS photometry for eclipsing binaries
+- `data/processed/eb_full_catalog_temperatures.parquet` - Full catalog with predicted temperatures (429k sources)
+- `data/processed/stars_types_with_predictions.parquet` - Combined stars_types.dat with ML predictions (2.1M sources, 78% with Teff)
+- `data/processed/stars_types_with_predictions.dat` - CSV/DAT export of above (271 MB)
+- `data/processed/eb_unified_features_engineered.parquet` - Unified feature dataset with engineered features (1.1M objects, 85 features)
+- `data/processed/eb_unified_features_engineered_train.parquet` - Training subset with Gaia Teff (701k objects)
+- `data/processed/eb_unified_features_engineered_predict.parquet` - Prediction subset without Gaia Teff (401k objects)
+- `data/processed/predictions_rf_unified_engineered_*.parquet` - Temperature predictions using unified features model
 
 ## Pipelines
 
@@ -136,6 +364,19 @@ python scripts/train_high_quality_model.py
 python scripts/predict_flag0_temperatures.py
 ```
 
+**Unified Features Workflow (Recommended)**:
+```bash
+# Create unified feature dataset with consistent feature engineering
+# This applies the same feature engineering to ALL objects (train + predict)
+python scripts/create_unified_feature_dataset.py --model-type engineered
+
+# Train model on unified features
+python scripts/train_model_unified_features.py --model-type engineered --n-estimators 300 --max-depth 20
+
+# Generate predictions using trained model
+python scripts/predict_unified_features.py --model models/rf_unified_engineered_YYYYMMDD_HHMMSS.pkl
+```
+
 **Spectroscopic Validation**:
 ```bash
 # Download APOGEE DR17 and GALAH DR3 spectroscopic catalogs
@@ -146,6 +387,22 @@ python scripts/crossmatch_apogee_local.py
 
 # Cross-match predictions with GALAH DR3 using VizieR Xmatch
 python scripts/crossmatch_galah_xmatch.py
+```
+
+**Full Catalog Temperature Prediction**:
+```bash
+# Query 2MASS photometry via IRSA
+python scripts/query_2mass_irsa.py
+
+# Predict temperatures for full catalog (all eclipsing binaries)
+python scripts/predict_temperatures_full_catalog.py
+
+# Merge stars_types.dat with predicted temperatures
+python scripts/merge_stars_types_with_predictions.py
+
+# Convert Parquet to CSV/DAT format (standalone, works without venv)
+python scripts/convert_parquet_to_csv.py input.parquet output.dat
+python scripts/convert_parquet_to_csv.py input.parquet  # Auto-generates output name
 ```
 
 **System Monitoring**:
@@ -174,6 +431,8 @@ jupyter lab notebooks/
 # - rf_classification_balanced_temp.ipynb - Temperature classification with balanced classes
 # - rf_classification_fixed_temp_bins.ipynb - Temperature classification with fixed bins
 # - hierarchical_clustering_hr.ipynb - HR diagram hierarchical clustering analysis
+# - unified_features_model_validation.ipynb - Validation of unified features models (with magnitude)
+# - unified_features_no_gpsf_model_validation.ipynb - Validation of color-only model (RECOMMENDED)
 
 # Note: All notebooks should be updated to use src/notebook_utils
 # See docs/NOTEBOOK_CONVERSION.md for migration guide
@@ -269,7 +528,7 @@ test_size = config.get('ml', 'test_size')
 - Monitor memory usage when working with full dataset
 
 **Notebook Development**:
-- **Use reusable modules** - See `NOTEBOOK_MODULES_README.md`
+- **Use reusable modules** - See `docs/NOTEBOOK_UTILITIES.md`
 - **No hardcoded paths** - Use `src/notebook_utils` functions
 - Start with template: `examples/notebook_template.ipynb`
 - See migration guide: `docs/NOTEBOOK_CONVERSION.md`
@@ -330,20 +589,45 @@ from src.features import engineer_all_features
   - **45% improvement** over basic model
   - Objects within 10%: significantly improved
 
+- **Color-Only RF Model** (rf_unified_engineered_20251016_112332) - **RECOMMENDED**:
+  - Features: 20 selected from 85 color-only features (NO magnitude features to avoid bias)
+  - Colors: g-r, r-i, i-z, B-V, BP-RP with polynomial, interaction, log, and temperature-dependent transforms
+  - Test MAE: 765.1 K, RMSE: 1168.4 K, R²: 0.315
+  - Objects within 10%: 43.4%
+  - **Key advantage**: Physically correct predictions based on colors (SED), not brightness
+  - **BP-RP features dominate**: ~60% of total feature importance
+  - **Data quality**: All objects have valid BP-RP colors (filtered out 11,248 with bp_rp=0)
+  - Training: 701,644 objects | Predictions: 401,111 objects
+  - Prediction mean: 4,862 K (much closer to training mean of 5,308 K, no magnitude bias)
+
 **Model Usage**:
 ```python
 import joblib
-import polars as pl
+import pandas as pd
 
-# Load model and metadata
-model = joblib.load('models/rf_temperature_regressor_feature_engineering_20251002_210423.pkl')
-selector = joblib.load('models/rf_temperature_regressor_feature_engineering_20251002_210423_selector.pkl')
+# Load color-only model (RECOMMENDED)
+model = joblib.load('models/rf_unified_engineered_20251016_112332.pkl')
+selector = joblib.load('models/rf_unified_engineered_20251016_112332_selector.pkl')
 
-# Load new data and predict
-data = pl.read_parquet('data/processed/ml_training_data_with_gaia.parquet')
-# ... feature engineering ...
-predictions = model.predict(selector.transform(features))
+# Load prediction data with unified features
+data = pd.read_parquet('data/processed/eb_unified_features_engineered_predict.parquet')
+
+# Extract features (exclude ID and target columns)
+feature_cols = [col for col in data.columns
+                if col not in ['original_ext_source_id', 'gaia_source_id', 'teff_gspphot']]
+X = data[feature_cols].values
+
+# Apply feature selector and predict
+X_selected = selector.transform(X)
+predictions = model.predict(X_selected)
 ```
+
+**Why Use the Color-Only Model?**:
+1. **Physically Correct**: Based on spectral energy distribution (colors), not brightness
+2. **No Magnitude Bias**: Predictions are independent of object brightness/distance
+3. **High Data Quality**: All objects have valid BP-RP colors (no missing critical features)
+4. **Consistent Features**: Same feature engineering applied to both training and prediction sets
+5. **Better Generalization**: Prediction mean (4,862 K) closer to training mean (5,308 K)
 
 ## Directory Structure
 
@@ -362,9 +646,16 @@ predictions = model.predict(selector.transform(features))
 │   ├── create_high_quality_ml_dataset.py  # Create flag 1 only dataset
 │   ├── train_high_quality_model.py        # Train RF model on high-quality data
 │   ├── predict_flag0_temperatures.py      # Predict temperatures for flag 0 sources
+│   ├── create_unified_feature_dataset.py  # Create unified features for train+predict (RECOMMENDED)
+│   ├── train_model_unified_features.py    # Train model on unified features
+│   ├── predict_unified_features.py        # Generate predictions with unified model
 │   ├── download_spectroscopic_catalogs.py # Download APOGEE/GALAH catalogs
 │   ├── crossmatch_apogee_local.py         # Validate with APOGEE DR17
 │   ├── crossmatch_galah_xmatch.py         # Validate with GALAH DR3
+│   ├── query_2mass_irsa.py                # Query 2MASS photometry via IRSA
+│   ├── predict_temperatures_full_catalog.py # Predict Teff for full catalog
+│   ├── merge_stars_types_with_predictions.py # Merge stars_types.dat with predictions
+│   ├── convert_parquet_to_csv.py          # Convert Parquet to CSV/DAT (standalone)
 │   └── memory_monitor.py                  # System memory monitoring for training
 ├── src/                        # Source code modules
 │   ├── data/                   # Data handling utilities
@@ -385,7 +676,9 @@ predictions = model.predict(selector.transform(features))
 │   ├── rf_regression_feature_engineering.ipynb  # Advanced RF with feature engineering
 │   ├── rf_classification_balanced_temp.ipynb    # Temperature classification (balanced)
 │   ├── rf_classification_fixed_temp_bins.ipynb  # Temperature classification (fixed bins)
-│   └── hierarchical_clustering_hr.ipynb         # HR diagram clustering analysis
+│   ├── hierarchical_clustering_hr.ipynb         # HR diagram clustering analysis
+│   ├── unified_features_model_validation.ipynb  # Unified features validation (with magnitude)
+│   └── unified_features_no_gpsf_model_validation.ipynb  # Color-only model validation (RECOMMENDED)
 ├── models/                     # Trained ML models
 │   ├── rf_temperature_regressor_*.pkl           # Random Forest models
 │   ├── rf_temperature_regressor_*_metadata.json # Model configurations
@@ -399,6 +692,15 @@ predictions = model.predict(selector.transform(features))
 │   └── cache/                 # Computation cache
 ├── config/                     # Configuration files
 ├── docs/                       # Documentation
+│   ├── AI_TEMPERATURE_PREDICTION_RESEARCH.md  # ML temperature prediction research notes
+│   ├── CONFIGURATION.md               # Configuration system guide
+│   ├── FEATURE_PREPARATION_FOR_PREDICTION.md  # Feature engineering guide for predictions
+│   ├── MIGRATION_GUIDE.md             # Migration guide for configuration system
+│   ├── NOTEBOOK_CONVERSION.md         # Notebook best practices
+│   ├── NOTEBOOK_GUIDE.md              # Notebook development guide
+│   ├── NOTEBOOK_UTILITIES.md          # Notebook utilities and modules guide
+│   ├── PIPELINES.md                   # Pipeline documentation
+│   └── SCRIPTS_MIGRATION.md           # Scripts migration status and notes
 ├── reports/                    # Generated reports
 │   ├── figures/               # Generated plots
 │   └── presentations/         # Presentation materials
@@ -470,3 +772,188 @@ python pipeline.py --ml --n-estimators 500 --max-depth 25
 ```
 
 For complete ML project patterns and templates, refer to `.cursorrules`.
+
+---
+
+## Unified Features Workflow
+
+### Overview
+
+The unified features workflow ensures **consistent feature engineering** across training and prediction sets. This approach solves the critical problem of feature distribution mismatch between objects with Gaia Teff (training) and objects without Gaia Teff (prediction).
+
+### Key Advantages
+
+1. **Consistent Feature Engineering**: Same transformations applied to ALL objects
+2. **No Distribution Mismatch**: Train and predict sets derived from same processing pipeline
+3. **Data Quality Control**: Outlier filtering and missing value handling applied uniformly
+4. **Physical Correctness**: Color-only model avoids magnitude bias
+5. **Reproducibility**: Single source of truth for feature engineering
+
+### Workflow Steps
+
+#### Step 1: Create Unified Feature Dataset
+
+```bash
+python scripts/create_unified_feature_dataset.py --model-type engineered
+```
+
+**What it does**:
+- Loads complete catalog (1.17M objects from `gaia_eb_panstarrs_phot_with_temperatures.parquet`)
+- Applies consistent outlier filtering to base features BEFORE feature engineering
+- Creates engineered features: polynomial (degree 3), interactions, log transforms, temperature-dependent
+- **Removes magnitude features** (gPSFMag) to avoid magnitude bias
+- Filters objects with missing critical colors (requires g-r, r-i, i-z, BP-RP)
+- Removes objects with bp_rp=0 (missing Gaia BP-RP colors)
+- Splits into training (with Gaia Teff) and prediction (without Gaia Teff) sets
+- Validates distributions between train/predict sets with KS tests
+
+**Output files**:
+- `eb_unified_features_engineered.parquet` - Complete dataset (1.1M objects, 85 features)
+- `eb_unified_features_engineered_train.parquet` - Training set (701k objects)
+- `eb_unified_features_engineered_predict.parquet` - Prediction set (401k objects)
+- `eb_unified_features_engineered_SUMMARY.txt` - Dataset creation summary
+- `reports/figures/feature_validation/feature_distributions_comparison.png` - Distribution comparison plots
+- `reports/figures/feature_validation/feature_comparison_statistics.csv` - KS/t-test statistics
+
+#### Step 2: Train Model on Unified Features
+
+```bash
+python scripts/train_model_unified_features.py --model-type engineered \
+    --n-estimators 300 --max-depth 20 --n-features 20
+```
+
+**What it does**:
+- Loads training set with unified features
+- Applies SelectKBest feature selection (f_regression scoring)
+- Trains Random Forest with specified hyperparameters
+- Evaluates on hold-out test set (20% split)
+- Saves model, selector, metadata, and test predictions
+
+**Output files**:
+- `rf_unified_engineered_YYYYMMDD_HHMMSS.pkl` - Trained model
+- `rf_unified_engineered_YYYYMMDD_HHMMSS_selector.pkl` - Feature selector
+- `rf_unified_engineered_YYYYMMDD_HHMMSS_metadata.json` - Model configuration
+- `rf_unified_engineered_YYYYMMDD_HHMMSS_SUMMARY.txt` - Performance metrics
+- `rf_unified_engineered_YYYYMMDD_HHMMSS_test_predictions.parquet` - Test set predictions
+
+#### Step 3: Generate Predictions
+
+```bash
+python scripts/predict_unified_features.py \
+    --model models/rf_unified_engineered_20251016_112332.pkl
+```
+
+**What it does**:
+- Loads prediction set with unified features
+- Applies the same feature selector used during training
+- Generates temperature predictions for all objects without Gaia Teff
+- Saves predictions with all input features
+
+**Output file**:
+- `predictions_rf_unified_engineered_YYYYMMDD_HHMMSS.parquet` - 401k predictions with features
+
+#### Step 4: Validate Model (Jupyter Notebook)
+
+```bash
+jupyter lab notebooks/unified_features_no_gpsf_model_validation.ipynb
+```
+
+**What the notebook does**:
+- Loads test predictions and compares with ground truth
+- Analyzes performance by temperature range
+- Compares temperature distributions (train vs predict)
+- Compares color distributions to understand sample differences
+- Creates HR diagrams (using gPSFMag for visualization only)
+- Displays feature importance
+- Generates validation figures in `reports/figures/validation/`
+
+### Data Quality Checks
+
+**Outlier Filtering (before feature engineering)**:
+```python
+color_limits = {
+    'g_r_color': (-0.5, 3.0),    # Typical stellar colors
+    'r_i_color': (-0.5, 2.0),
+    'i_z_color': (-0.5, 1.5),
+    'B_V_color': (-0.5, 3.0),
+    'bp_rp': (-0.5, 4.0)
+}
+```
+
+**Required Features**:
+- All objects must have: g-r, r-i, i-z, B-V, BP-RP colors
+- Objects with bp_rp=0 (missing Gaia BP-RP) are removed
+- This ensures all predictions use complete feature sets
+
+**Distribution Validation**:
+- KS tests compare train/predict distributions for each feature
+- t-tests compare means
+- Plots show overlapping histograms for visual validation
+- Statistics saved to CSV for review
+
+### Color-Only Model vs Magnitude Model
+
+| Aspect | Color-Only Model (RECOMMENDED) | Magnitude Model |
+|--------|-------------------------------|-----------------|
+| **Features** | 85 color-only features | 86 features (including gPSFMag) |
+| **Magnitude bias** | None - predictions independent of brightness | Strong - 57% feature importance on gPSFMag |
+| **Test R²** | 0.315 | 0.543 |
+| **Test MAE** | 765 K | 550 K |
+| **Physical correctness** | ✓ Based on SED (colors) | ✗ Brightness-dependent |
+| **Prediction mean** | 4,862 K (close to training: 5,308 K) | 4,437 K (878 K systematic error) |
+| **Data quality** | All objects have valid BP-RP | Includes objects with missing BP-RP |
+| **Best for** | Science applications, fainter objects | Internal validation only |
+
+**Why the color-only model has lower R² but is better**:
+- R² is calculated on test set, which has similar magnitude distribution to training
+- The magnitude model overfits to brightness, giving high R² on test but biased predictions
+- The color-only model generalizes better to objects with different magnitude distributions
+- Physically, temperature should be determined by SED (colors), not by brightness
+
+### Model Files
+
+**Current recommended model**: `rf_unified_engineered_20251016_112332`
+- Training: 701,644 objects
+- Predictions: 401,111 objects
+- Test MAE: 765.1 K, R²: 0.315
+- Within 10%: 43.4% of test objects
+- BP-RP features: ~60% combined importance
+- All predictions have valid BP-RP colors (no zeros)
+
+### Troubleshooting
+
+**Issue**: Distribution comparison shows wide x-axis ranges
+
+**Cause**: Outliers in original features amplified by polynomial transforms
+
+**Solution**: Filter outliers in BASE features before feature engineering (already implemented)
+
+---
+
+**Issue**: Zero bp_rp values in predictions
+
+**Cause**: Some objects missing Gaia BP-RP photometry
+
+**Solution**: Filter out objects with bp_rp=0 in Step 1 (already implemented)
+
+---
+
+**Issue**: Prediction mean temperature differs from training mean
+
+**Cause**: Magnitude bias if using magnitude features, OR real physical difference in samples
+
+**Solution**: Use color-only model to eliminate magnitude bias. Remaining difference reflects true sample differences (prediction set is redder/cooler)
+
+### Validation Notebooks
+
+**For magnitude model validation**:
+- `notebooks/unified_features_model_validation.ipynb`
+- Shows impact of magnitude features (57% importance on gPSFMag)
+- Demonstrates systematic bias toward fainter objects
+
+**For color-only model validation** (RECOMMENDED):
+- `notebooks/unified_features_no_gpsf_model_validation.ipynb`
+- Validates physically correct color-based predictions
+- Shows BP-RP feature dominance (~60% importance)
+- Demonstrates no magnitude bias
+- Loads gPSFMag separately for HRD visualization only

@@ -1,0 +1,57 @@
+RANDOM FOREST MODEL - UNIFIED FEATURES
+======================================================================
+
+Model ID: rf_unified_engineered_20251016_112332
+Model type: engineered
+Timestamp: 20251016_112332
+
+DATASET:
+  Training samples: 561,315
+  Test samples: 140,329
+  Total features: 85
+  Selected features: 20
+
+PERFORMANCE METRICS:
+  Test MAE:  765.1 K
+  Test RMSE: 1168.4 K
+  Test R²:   0.315
+  Mean error: 13.47%
+  Median error: 11.34%
+
+ACCURACY:
+  Within 5%:  28,311 (20.2%)
+  Within 10%: 60,864 (43.4%)
+  Within 20%: 113,031 (80.5%)
+
+HYPERPARAMETERS:
+  n_estimators: 300
+  max_depth: 20
+  min_samples_leaf: 4
+  min_samples_split: 5
+  random_state: 42
+  n_jobs: -1
+  n_features_select: 20
+
+SELECTED FEATURES:
+   1. g_r_color
+   2. r_i_color
+   3. B_V_color
+   4. bp_rp
+   5. g_r_color^2
+   6. g_r_color_B_V_color
+   7. g_r_color_bp_rp
+   8. B_V_color^2
+   9. B_V_color_bp_rp
+  10. bp_rp^2
+  11. g_r_color_x_B_V_color
+  12. g_r_color_x_bp_rp
+  13. B_V_color_x_bp_rp
+  14. log_g_r_color
+  15. log_r_i_color
+  16. log_B_V_color
+  17. log_bp_rp
+  18. cool_B_V_color
+  19. cool_bp_rp
+  20. mid_bp_rp
+
+Training time: 665.7 seconds

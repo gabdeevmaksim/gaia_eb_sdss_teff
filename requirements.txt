@@ -12,3 +12,5 @@ pyyaml
 healpy
 reproject
 aplpy
+pyvo
+astroquery

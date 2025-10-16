@@ -1,0 +1,81 @@
+{
+  "model_id": "rf_unified_engineered_20251016_112332",
+  "timestamp": "20251016_112332",
+  "model_type": "RandomForestRegressor",
+  "dataset_type": "unified_features_engineered",
+  "training_samples": 561315,
+  "test_samples": 140329,
+  "total_features": 85,
+  "selected_features": [
+    "g_r_color",
+    "r_i_color",
+    "B_V_color",
+    "bp_rp",
+    "g_r_color^2",
+    "g_r_color_B_V_color",
+    "g_r_color_bp_rp",
+    "B_V_color^2",
+    "B_V_color_bp_rp",
+    "bp_rp^2",
+    "g_r_color_x_B_V_color",
+    "g_r_color_x_bp_rp",
+    "B_V_color_x_bp_rp",
+    "log_g_r_color",
+    "log_r_i_color",
+    "log_B_V_color",
+    "log_bp_rp",
+    "cool_B_V_color",
+    "cool_bp_rp",
+    "mid_bp_rp"
+  ],
+  "n_features_selected": 20,
+  "hyperparameters": {
+    "n_estimators": 300,
+    "max_depth": 20,
+    "min_samples_leaf": 4,
+    "min_samples_split": 5,
+    "random_state": 42,
+    "n_jobs": -1,
+    "n_features_select": 20
+  },
+  "performance_metrics": {
+    "train": {
+      "mae": 669.5625420362608,
+      "rmse": 1023.1299626238308,
+      "r2": 0.47387682256488184
+    },
+    "test": {
+      "mae": 765.0927161179486,
+      "rmse": 1168.3795443164108,
+      "r2": 0.31499701556635995,
+      "mean_error_pct": 13.469729770740342,
+      "median_error_pct": 11.335374627245866,
+      "within_5pct": 28311,
+      "within_10pct": 60864,
+      "within_20pct": 113031
+    }
+  },
+  "training_time_seconds": 665.659901,
+  "feature_importances": {
+    "log_bp_rp": 0.16976929188942502,
+    "bp_rp": 0.15620139367364463,
+    "bp_rp^2": 0.1422357545164263,
+    "cool_bp_rp": 0.12915290335567556,
+    "r_i_color": 0.05105234097061068,
+    "log_r_i_color": 0.050960849184367184,
+    "B_V_color_bp_rp": 0.04331109201484569,
+    "B_V_color_x_bp_rp": 0.041573403961228474,
+    "g_r_color_bp_rp": 0.04129611353520395,
+    "g_r_color_x_bp_rp": 0.040329467385367634,
+    "g_r_color^2": 0.017969146487951483,
+    "B_V_color^2": 0.015941836518100563,
+    "g_r_color_x_B_V_color": 0.015191068000996946,
+    "B_V_color": 0.014529629322012228,
+    "log_g_r_color": 0.01318342298360448,
+    "log_B_V_color": 0.013171176224230769,
+    "g_r_color": 0.013117755333163691,
+    "g_r_color_B_V_color": 0.013022041849380725,
+    "cool_B_V_color": 0.009887073393240164,
+    "mid_bp_rp": 0.008104239400523803
+  }
+}
