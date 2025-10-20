@@ -1,0 +1,126 @@
+20:04:42 - INFO - ================================================================================
+20:04:42 - INFO - PREDICT TEMPERATURES: GAIA + 2MASS COLORS MODEL
+20:04:42 - INFO - ================================================================================
+20:04:42 - INFO - 
+Model ID: rf_gaia_2mass_colors_20251016_155128
+20:04:42 - INFO - 
+1. Loading trained model...
+20:04:46 - INFO -    Model loaded: rf_gaia_2mass_colors_20251016_155128.pkl
+20:04:46 - INFO - 
+2. Loading Gaia catalog...
+20:04:47 - INFO -    Total objects: 1,230,649
+20:04:47 - INFO - 
+3. Filtering objects without Gaia GSP-Phot temperatures...
+20:04:47 - INFO -    Objects without Teff: 493,621
+20:04:47 - INFO -    (These are candidates for temperature prediction)
+20:04:47 - INFO - 
+4. Loading 2MASS photometry...
+20:04:48 - INFO -    2MASS objects: 1,123,471
+20:04:48 - INFO - 
+5. Calculating 2MASS colors...
+20:04:48 - INFO - 
+6. Merging catalogs on Gaia source_id...
+20:04:48 - INFO -    Objects with both Gaia and 2MASS: 111,362
+20:04:48 - INFO - 
+7. Checking data quality...
+20:04:48 - INFO -    bp_rp       : 109,537 valid, 1,825 missing
+20:04:48 - INFO -    j_h_color   : 111,362 valid, 0 missing
+20:04:48 - INFO -    h_k_color   : 111,362 valid, 0 missing
+20:04:48 - INFO -    j_k_color   : 111,362 valid, 0 missing
+20:04:48 - INFO - 
+   Objects with all 4 colors: 109,537
+20:04:48 - INFO -    Removed (missing colors): 1,825
+20:04:48 - INFO - 
+8. Filtering unrealistic color values...
+20:04:48 - INFO -    bp_rp       : removing 688 outliers outside [-0.5, 4.0]
+20:04:48 - INFO -    j_h_color   : removing 1,144 outliers outside [-0.5, 2.0]
+20:04:49 - INFO -    h_k_color   : removing 6,104 outliers outside [-0.3, 1.0]
+20:04:49 - INFO -    j_k_color   : removing 93 outliers outside [-0.5, 2.5]
+20:04:49 - INFO - 
+   Final dataset for prediction: 101,508 objects
+20:04:49 - INFO -    Removed outliers: 8,029
+20:04:49 - INFO - 
+9. Making temperature predictions...
+20:04:49 - INFO -    Feature matrix shape: (101508, 4)
+[Parallel(n_jobs=16)]: Using backend ThreadingBackend with 16 concurrent workers.
+[Parallel(n_jobs=16)]: Done  18 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done 168 tasks      | elapsed:    0.7s
+[Parallel(n_jobs=16)]: Done 300 out of 300 | elapsed:    1.0s finished
+20:04:50 - INFO -    Predictions generated: 101,508
+20:04:50 - INFO - 
+================================================================================
+20:04:50 - INFO - PREDICTION STATISTICS
+20:04:50 - INFO - ================================================================================
+20:04:50 - INFO - 
+Predicted temperatures:
+20:04:50 - INFO -   Minimum: 3346.1 K
+20:04:50 - INFO -   Maximum: 14466.9 K
+20:04:50 - INFO -   Mean: 5133.7 K
+20:04:50 - INFO -   Median: 4851.2 K
+20:04:50 - INFO -   Std: 1046.8 K
+20:04:50 - INFO - 
+Temperature distribution:
+20:04:50 - INFO -   <4000K         :  6,229 (  6.1%)
+20:04:50 - INFO -   4000-5000K     : 49,936 ( 49.2%)
+20:04:50 - INFO -   5000-6000K     : 25,897 ( 25.5%)
+20:04:50 - INFO -   6000-7000K     : 14,070 ( 13.9%)
+20:04:50 - INFO -   7000-10000K    :  5,150 (  5.1%)
+20:04:50 - INFO -   >10000K        :    226 (  0.2%)
+20:04:50 - INFO - 
+================================================================================
+20:04:50 - INFO - COLOR STATISTICS (PREDICTED SAMPLE)
+20:04:50 - INFO - ================================================================================
+20:04:50 - INFO - 
+bp_rp:
+20:04:50 - INFO -   Range: -0.349 to 4.000
+20:04:50 - INFO -   Mean: 1.795 ± 0.632
+20:04:50 - INFO -   Median: 1.759
+20:04:50 - INFO - 
+j_h_color:
+20:04:50 - INFO -   Range: -0.499 to 2.000
+20:04:50 - INFO -   Mean: 0.588 ± 0.292
+20:04:50 - INFO -   Median: 0.551
+20:04:50 - INFO - 
+h_k_color:
+20:04:50 - INFO -   Range: -0.300 to 1.000
+20:04:50 - INFO -   Mean: 0.251 ± 0.221
+20:04:50 - INFO -   Median: 0.208
+20:04:50 - INFO - 
+j_k_color:
+20:04:50 - INFO -   Range: -0.499 to 2.500
+20:04:50 - INFO -   Mean: 0.838 ± 0.385
+20:04:50 - INFO -   Median: 0.785
+20:04:50 - INFO - 
+================================================================================
+20:04:50 - INFO - 2MASS DATA QUALITY
+20:04:50 - INFO - ================================================================================
+20:04:50 - INFO - 
+Top 10 photometric quality flags:
+20:04:50 - INFO -   AAA: 45,462 ( 44.8%)
+20:04:50 - INFO -   AAB:  8,428 (  8.3%)
+20:04:50 - INFO -   BUU:  4,186 (  4.1%)
+20:04:50 - INFO -   BCU:  3,337 (  3.3%)
+20:04:50 - INFO -   BBC:  2,633 (  2.6%)
+20:04:50 - INFO -   ABC:  2,586 (  2.5%)
+20:04:50 - INFO -   BBU:  2,502 (  2.5%)
+20:04:50 - INFO -   ABB:  2,480 (  2.4%)
+20:04:50 - INFO -   AUU:  2,375 (  2.3%)
+20:04:50 - INFO -   BCC:  1,946 (  1.9%)
+20:04:50 - INFO - 
+High quality (AAA/AAB/ABA/ABB): 56,894 (56.0%)
+20:04:50 - INFO - 
+================================================================================
+20:04:50 - INFO - SAVING PREDICTIONS
+20:04:50 - INFO - ================================================================================
+20:04:50 - INFO - Output file: /Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/data/processed/gaia_2mass_temperature_predictions_rf_gaia_2mass_colors_20251016_155128.parquet
+20:04:50 - INFO - Saved: 101,508 objects with predicted temperatures
+20:04:50 - INFO - Columns: ['source_id', 'bp_rp', 'j_h_color', 'h_k_color', 'j_k_color', 'teff_predicted', 'ph_qual', 'j_snr', 'h_snr', 'k_snr']
+20:04:50 - INFO - Summary: /Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/data/processed/gaia_2mass_temperature_predictions_rf_gaia_2mass_colors_20251016_155128_SUMMARY.txt
+20:04:50 - INFO - Schema documentation: docs/GAIA_2MASS_PREDICTIONS_SCHEMA.md
+20:04:50 - INFO - 
+================================================================================
+20:04:50 - INFO - PREDICTION COMPLETED SUCCESSFULLY!
+20:04:50 - INFO - ================================================================================
+20:04:50 - INFO - 
+Predicted temperatures for 101,508 objects
+20:04:50 - INFO - Output: gaia_2mass_temperature_predictions_rf_gaia_2mass_colors_20251016_155128.parquet

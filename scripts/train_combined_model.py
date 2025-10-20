@@ -1,27 +1,25 @@
 #!/usr/bin/env python3
 """
-Train Random Forest model on unified feature dataset.
+Train Random Forest model on combined Pan-STARRS + 2MASS + Gaia colors.
 
-This script trains a model using pre-engineered features from the unified dataset,
-ensuring perfect consistency with prediction data.
+This script trains a temperature prediction model using 8 color features spanning
+optical to near-infrared wavelengths:
+- Gaia: BP-RP
+- Pan-STARRS: g-r, r-i, i-z
+- Synthetic: B-V
+- 2MASS: J-H, H-K, J-K
 
-Key advantages:
-- Features already engineered (no mistakes possible)
-- Same features for training and prediction (guaranteed)
-- Can validate feature distributions before training
+No magnitude features (color-only model to avoid distance bias).
 
 Usage:
-    # Train with default parameters (engineered features)
-    python scripts/train_model_unified_features.py --model-type engineered
-
-    # Train with basic features
-    python scripts/train_model_unified_features.py --model-type basic
+    # Train with default parameters
+    nohup python scripts/train_combined_model.py > train_combined.log 2>&1 &
 
     # Custom hyperparameters
-    python scripts/train_model_unified_features.py --model-type engineered --n-estimators 500 --max-depth 25
+    python scripts/train_combined_model.py --n-estimators 500 --max-depth 25
 
 Author: Claude Code
-Date: 2025-10-15
+Date: 2025-10-16
 """
 
 import sys
@@ -40,7 +38,6 @@ import joblib
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.feature_selection import SelectKBest, f_regression
 
 from src.config import get_config
 
@@ -50,20 +47,19 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     datefmt='%H:%M:%S'
 )
+logger = logging.getLogger(__name__)
 
 
-def load_training_data(config, model_type: str) -> pd.DataFrame:
-    """Load pre-engineered training dataset."""
-    logger = logging.getLogger(__name__)
-
-    input_file = config.get_path('processed') / f'eb_unified_features_{model_type}_train.parquet'
+def load_training_data(config):
+    """Load combined Pan-STARRS + 2MASS training dataset."""
+    input_file = config.get_path('processed') / 'combined_panstarrs_2mass_colors_training.parquet'
 
     if not input_file.exists():
         logger.error(f"Training data not found: {input_file}")
-        logger.error(f"Please run: python scripts/create_unified_feature_dataset.py --model-type {model_type}")
+        logger.error("Please run: python scripts/create_combined_panstarrs_2mass_dataset.py")
         raise FileNotFoundError(f"Training data not found: {input_file}")
 
-    logger.info(f"Loading training data: {input_file.name}")
+    logger.info(f"Loading combined training data: {input_file.name}")
     df = pd.read_parquet(input_file)
 
     logger.info(f"  Loaded {len(df):,} training objects")
@@ -72,96 +68,67 @@ def load_training_data(config, model_type: str) -> pd.DataFrame:
     return df
 
 
-def prepare_features_and_target(
-    df: pd.DataFrame,
-    model_type: str
-) -> tuple:
+def prepare_features_and_target(df):
     """
     Prepare feature matrix and target variable.
 
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Training dataset with engineered features
-    model_type : str
-        'basic' or 'engineered'
+    Features: 8 color indices only (no magnitudes)
+    Target: teff_gspphot
 
     Returns
     -------
     tuple
-        (X, y, feature_names, exclude_cols)
+        (X, y, feature_names)
     """
-    logger = logging.getLogger(__name__)
-
-    # Define columns to exclude from features
-    exclude_cols = [
-        'original_ext_source_id',
-        'gaia_source_id',
-        'teff_gspphot',
-        'Te_gr',
-        'Te_ri',
-        'Te_iz'
+    # Define color features (8 total)
+    color_features = [
+        'bp_rp',       # Gaia
+        'g_r_color',   # Pan-STARRS
+        'r_i_color',
+        'i_z_color',
+        'B_V_color',   # Synthetic
+        'j_h_color',   # 2MASS
+        'h_k_color',
+        'j_k_color'
     ]
 
-    # Get feature columns
-    feature_cols = [col for col in df.columns if col not in exclude_cols]
-
-    logger.info(f"\nPreparing features ({model_type} model):")
-    logger.info(f"  Total columns: {len(df.columns)}")
-    logger.info(f"  Feature columns: {len(feature_cols)}")
-    logger.info(f"  Excluded columns: {exclude_cols}")
+    logger.info(f"\nPreparing features:")
+    logger.info(f"  Color features: {len(color_features)}")
+    for i, feat in enumerate(color_features, 1):
+        logger.info(f"    {i}. {feat}")
 
     # Create feature matrix
-    X = df[feature_cols].copy()
+    X = df[color_features].copy()
     y = df['teff_gspphot'].copy()
 
-    logger.info(f"  Feature matrix shape: {X.shape}")
+    logger.info(f"\n  Feature matrix shape: {X.shape}")
     logger.info(f"  Target shape: {y.shape}")
     logger.info(f"  Target range: {y.min():.1f} - {y.max():.1f} K")
     logger.info(f"  Target mean: {y.mean():.1f} K")
 
-    return X, y, feature_cols, exclude_cols
+    return X, y, color_features
 
 
 def train_model(
-    X_train: pd.DataFrame,
-    X_test: pd.DataFrame,
-    y_train: pd.Series,
-    y_test: pd.Series,
-    feature_names: list,
-    n_estimators: int = 300,
-    max_depth: int = 20,
-    min_samples_leaf: int = 4,
-    min_samples_split: int = 5,
-    n_features_select: int = 20,
-    random_state: int = 42
-) -> dict:
+    X_train, X_test, y_train, y_test,
+    feature_names,
+    n_estimators=300,
+    max_depth=20,
+    min_samples_leaf=4,
+    min_samples_split=5,
+    random_state=42
+):
     """
-    Train Random Forest model with feature selection.
+    Train Random Forest model.
 
     Returns
     -------
     dict
-        Dictionary with model, selector, and performance metrics
+        Dictionary with model and performance metrics
     """
-    logger = logging.getLogger(__name__)
-
     logger.info("\n" + "=" * 70)
     logger.info("TRAINING RANDOM FOREST MODEL")
     logger.info("=" * 70)
-
-    # Feature selection
-    logger.info(f"\nSelecting {n_features_select} best features...")
-    selector = SelectKBest(score_func=f_regression, k=n_features_select)
-
-    X_train_selected = selector.fit_transform(X_train, y_train)
-    X_test_selected = selector.transform(X_test)
-
-    # Get selected feature names
-    selected_mask = selector.get_support()
-    selected_features = [feat for feat, sel in zip(feature_names, selected_mask) if sel]
-
-    logger.info(f"  Selected features: {selected_features}")
 
     # Train Random Forest
     logger.info(f"\nTraining Random Forest...")
@@ -181,15 +148,15 @@ def train_model(
     )
 
     start_time = datetime.now()
-    model.fit(X_train_selected, y_train)
+    model.fit(X_train, y_train)
     training_time = (datetime.now() - start_time).total_seconds()
 
     logger.info(f"  Training completed in {training_time:.1f} seconds")
 
     # Make predictions
     logger.info("\nMaking predictions...")
-    y_train_pred = model.predict(X_train_selected)
-    y_test_pred = model.predict(X_test_selected)
+    y_train_pred = model.predict(X_train)
+    y_test_pred = model.predict(X_test)
 
     # Calculate metrics
     train_mae = mean_absolute_error(y_train, y_train_pred)
@@ -201,7 +168,6 @@ def train_model(
     test_r2 = r2_score(y_test, y_test_pred)
 
     # Calculate error percentages
-    train_error_pct = (np.abs(y_train - y_train_pred) / y_train * 100)
     test_error_pct = (np.abs(y_test - y_test_pred) / y_test * 100)
 
     within_5pct = (test_error_pct <= 5).sum()
@@ -229,19 +195,18 @@ def train_model(
     logger.info(f"  Within 20%: {within_20pct:,} ({100*within_20pct/len(y_test):.1f}%)")
 
     # Feature importance
-    logger.info(f"\nTop 10 most important features:")
+    logger.info(f"\nFeature importance:")
     feature_importances = pd.DataFrame({
-        'feature': selected_features,
+        'feature': feature_names,
         'importance': model.feature_importances_
     }).sort_values('importance', ascending=False)
 
-    for idx, row in feature_importances.head(10).iterrows():
-        logger.info(f"  {row['feature']}: {row['importance']:.4f}")
+    for idx, row in feature_importances.iterrows():
+        logger.info(f"  {row['feature']:<15} {row['importance']:.4f}")
 
     return {
         'model': model,
-        'selector': selector,
-        'selected_features': selected_features,
+        'feature_names': feature_names,
         'training_time': training_time,
         'train_metrics': {
             'mae': train_mae,
@@ -266,19 +231,11 @@ def train_model(
     }
 
 
-def save_model_and_metadata(
-    results: dict,
-    model_type: str,
-    config,
-    hyperparameters: dict,
-    dataset_info: dict
-):
-    """Save model, selector, metadata, and predictions."""
-    logger = logging.getLogger(__name__)
-
+def save_model_and_metadata(results, config, hyperparameters, dataset_info):
+    """Save model, metadata, and predictions."""
     # Create timestamp and model ID
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    model_id = f"rf_unified_{model_type}_{timestamp}"
+    model_id = f"rf_combined_colors_{timestamp}"
 
     logger.info("\n" + "=" * 70)
     logger.info("SAVING MODEL AND METADATA")
@@ -292,16 +249,11 @@ def save_model_and_metadata(
     joblib.dump(results['model'], model_file)
     logger.info(f"  Model saved: {model_file.name}")
 
-    # Save selector
-    selector_file = models_dir / f"{model_id}_selector.pkl"
-    joblib.dump(results['selector'], selector_file)
-    logger.info(f"  Selector saved: {selector_file.name}")
-
     # Save test predictions
     pred_df = pd.DataFrame({
         'true_temperature': results['test_predictions']['y_true'],
         'predicted_temperature': results['test_predictions']['y_pred'],
-        'residual': results['test_predictions']['y_true'] - results['test_predictions']['y_pred']
+        'residual': results['test_predictions']['y_pred'] - results['test_predictions']['y_true']
     })
     pred_file = models_dir / f"{model_id}_test_predictions.parquet"
     pred_df.to_parquet(pred_file, index=False)
@@ -312,12 +264,11 @@ def save_model_and_metadata(
         'model_id': model_id,
         'timestamp': timestamp,
         'model_type': 'RandomForestRegressor',
-        'dataset_type': f'unified_features_{model_type}',
+        'dataset_type': 'combined_panstarrs_2mass_colors',
         'training_samples': dataset_info['train_samples'],
         'test_samples': dataset_info['test_samples'],
-        'total_features': dataset_info['total_features'],
-        'selected_features': results['selected_features'],
-        'n_features_selected': len(results['selected_features']),
+        'n_features': len(results['feature_names']),
+        'features': results['feature_names'],
         'hyperparameters': hyperparameters,
         'performance_metrics': {
             'train': results['train_metrics'],
@@ -326,7 +277,7 @@ def save_model_and_metadata(
         'training_time_seconds': results['training_time'],
         'feature_importance': {
             row['feature']: row['importance']
-            for _, row in results['feature_importances'].head(20).iterrows()
+            for _, row in results['feature_importances'].iterrows()
         }
     }
 
@@ -339,17 +290,23 @@ def save_model_and_metadata(
     # Save summary
     summary_file = models_dir / f"{model_id}_SUMMARY.txt"
     with open(summary_file, 'w') as f:
-        f.write(f"RANDOM FOREST MODEL - UNIFIED FEATURES\n")
+        f.write(f"COMBINED PAN-STARRS + 2MASS + GAIA COLORS MODEL\n")
         f.write(f"=" * 70 + "\n\n")
         f.write(f"Model ID: {model_id}\n")
-        f.write(f"Model type: {model_type}\n")
         f.write(f"Timestamp: {timestamp}\n\n")
 
         f.write(f"DATASET:\n")
         f.write(f"  Training samples: {dataset_info['train_samples']:,}\n")
         f.write(f"  Test samples: {dataset_info['test_samples']:,}\n")
-        f.write(f"  Total features: {dataset_info['total_features']}\n")
-        f.write(f"  Selected features: {len(results['selected_features'])}\n\n")
+        f.write(f"  Features: {len(results['feature_names'])} color indices\n\n")
+
+        f.write(f"COLOR FEATURES (8 total):\n")
+        f.write(f"  Optical:\n")
+        f.write(f"    - bp_rp (Gaia BP-RP)\n")
+        f.write(f"    - g_r_color, r_i_color, i_z_color (Pan-STARRS)\n")
+        f.write(f"    - B_V_color (Synthetic)\n")
+        f.write(f"  Near-Infrared:\n")
+        f.write(f"    - j_h_color, h_k_color, j_k_color (2MASS)\n\n")
 
         f.write(f"PERFORMANCE METRICS:\n")
         f.write(f"  Test MAE:  {results['test_metrics']['mae']:.1f} K\n")
@@ -367,9 +324,9 @@ def save_model_and_metadata(
         for key, value in hyperparameters.items():
             f.write(f"  {key}: {value}\n")
 
-        f.write(f"\nSELECTED FEATURES:\n")
-        for i, feat in enumerate(results['selected_features'], 1):
-            f.write(f"  {i:2d}. {feat}\n")
+        f.write(f"\nFEATURE IMPORTANCE:\n")
+        for idx, row in results['feature_importances'].iterrows():
+            f.write(f"  {row['feature']:<15} {row['importance']:.4f}\n")
 
         f.write(f"\nTraining time: {results['training_time']:.1f} seconds\n")
 
@@ -380,83 +337,30 @@ def save_model_and_metadata(
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Train Random Forest model on unified features',
+        description='Train RF model on combined Pan-STARRS + 2MASS + Gaia colors',
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    parser.add_argument(
-        '--model-type',
-        type=str,
-        choices=['basic', 'engineered'],
-        default='engineered',
-        help='Type of features: basic or engineered (default: engineered)'
-    )
-
-    parser.add_argument(
-        '--n-estimators',
-        type=int,
-        default=300,
-        help='Number of trees (default: 300)'
-    )
-
-    parser.add_argument(
-        '--max-depth',
-        type=int,
-        default=20,
-        help='Maximum tree depth (default: 20)'
-    )
-
-    parser.add_argument(
-        '--min-samples-leaf',
-        type=int,
-        default=4,
-        help='Minimum samples per leaf (default: 4)'
-    )
-
-    parser.add_argument(
-        '--min-samples-split',
-        type=int,
-        default=5,
-        help='Minimum samples to split (default: 5)'
-    )
-
-    parser.add_argument(
-        '--n-features',
-        type=int,
-        default=20,
-        help='Number of features to select (default: 20)'
-    )
-
-    parser.add_argument(
-        '--test-size',
-        type=float,
-        default=0.2,
-        help='Test set fraction (default: 0.2)'
-    )
-
-    parser.add_argument(
-        '--random-state',
-        type=int,
-        default=42,
-        help='Random seed (default: 42)'
-    )
+    parser.add_argument('--n-estimators', type=int, default=300, help='Number of trees (default: 300)')
+    parser.add_argument('--max-depth', type=int, default=20, help='Maximum tree depth (default: 20)')
+    parser.add_argument('--min-samples-leaf', type=int, default=4, help='Minimum samples per leaf (default: 4)')
+    parser.add_argument('--min-samples-split', type=int, default=5, help='Minimum samples to split (default: 5)')
+    parser.add_argument('--test-size', type=float, default=0.2, help='Test set fraction (default: 0.2)')
+    parser.add_argument('--random-state', type=int, default=42, help='Random seed (default: 42)')
 
     args = parser.parse_args()
 
-    logger = logging.getLogger(__name__)
     config = get_config()
 
     logger.info("=" * 80)
-    logger.info("TRAIN MODEL ON UNIFIED FEATURES")
+    logger.info("TRAIN COMBINED PAN-STARRS + 2MASS + GAIA MODEL")
     logger.info("=" * 80)
-    logger.info(f"Model type: {args.model_type}")
-    logger.info("")
 
     # Load data
-    df_train = load_training_data(config, args.model_type)
+    df_train = load_training_data(config)
 
     # Prepare features and target
-    X, y, feature_names, exclude_cols = prepare_features_and_target(df_train, args.model_type)
+    X, y, feature_names = prepare_features_and_target(df_train)
 
     # Train-test split
     logger.info(f"\nSplitting data (test_size={args.test_size})...")
@@ -477,8 +381,7 @@ def main():
         max_depth=args.max_depth,
         min_samples_leaf=args.min_samples_leaf,
         min_samples_split=args.min_samples_split,
-        random_state=args.random_state,
-        n_features_select=args.n_features
+        random_state=args.random_state
     )
 
     # Hyperparameters for metadata
@@ -488,21 +391,16 @@ def main():
         'min_samples_leaf': args.min_samples_leaf,
         'min_samples_split': args.min_samples_split,
         'random_state': args.random_state,
-        'n_jobs': -1,
-        'n_features_select': args.n_features
+        'n_jobs': -1
     }
 
     # Save model and metadata
     dataset_info = {
         'train_samples': len(X_train),
-        'test_samples': len(X_test),
-        'total_features': len(feature_names)
+        'test_samples': len(X_test)
     }
 
-    model_id = save_model_and_metadata(
-        results, args.model_type, config,
-        hyperparameters, dataset_info
-    )
+    model_id = save_model_and_metadata(results, config, hyperparameters, dataset_info)
 
     logger.info("\n" + "=" * 80)
     logger.info("TRAINING COMPLETED SUCCESSFULLY!")
@@ -510,8 +408,9 @@ def main():
     logger.info(f"\nModel ID: {model_id}")
     logger.info(f"Test MAE: {results['test_metrics']['mae']:.1f} K")
     logger.info(f"Test R²: {results['test_metrics']['r2']:.3f}")
-    logger.info(f"\nNext step:")
-    logger.info(f"  python scripts/predict_unified_features.py --model models/{model_id}.pkl")
+    logger.info(f"\nNext steps:")
+    logger.info(f"  1. Create validation plots")
+    logger.info(f"  2. Predict temperatures for objects without Gaia Teff")
 
 
 if __name__ == '__main__':

@@ -1,0 +1,132 @@
+20:45:39 - INFO - ================================================================================
+20:45:39 - INFO - TRAIN GAIA + 2MASS ENGINEERED FEATURES MODEL
+20:45:39 - INFO - ================================================================================
+20:45:39 - INFO - Loading engineered training data: gaia_2mass_colors_engineered_train.parquet
+20:45:40 - INFO -   Loaded 525,738 training objects
+20:45:40 - INFO -   Total columns: 58
+20:45:40 - INFO - 
+Preparing features:
+20:45:40 - INFO -   Total columns: 58
+20:45:40 - INFO -   Feature columns: 56
+20:45:40 - INFO -   Excluded columns: ['source_id', 'teff_gspphot']
+20:45:40 - INFO -   Feature matrix shape: (525738, 56)
+20:45:40 - INFO -   Target shape: (525738,)
+20:45:40 - INFO -   Target range: 2888.2 - 32656.8 K
+20:45:40 - INFO -   Target mean: 5533.8 K
+20:45:40 - INFO - 
+Splitting data (test_size=0.2)...
+20:45:41 - INFO -   Training set: 420,590 samples
+20:45:41 - INFO -   Test set: 105,148 samples
+20:45:41 - INFO - 
+======================================================================
+20:45:41 - INFO - TRAINING RANDOM FOREST MODEL
+20:45:41 - INFO - ======================================================================
+20:45:41 - INFO - 
+Selecting 30 best features...
+20:45:41 - INFO -   Selected features:
+20:45:41 - INFO -      1. bp_rp
+20:45:41 - INFO -      2. j_h_color
+20:45:41 - INFO -      3. j_k_color
+20:45:41 - INFO -      4. bp_rp^2
+20:45:41 - INFO -      5. bp_rp_j_h_color
+20:45:41 - INFO -      6. bp_rp_j_k_color
+20:45:41 - INFO -      7. j_h_color^2
+20:45:41 - INFO -      8. j_h_color_j_k_color
+20:45:41 - INFO -      9. j_k_color^2
+20:45:41 - INFO -     10. bp_rp^3
+20:45:41 - INFO -     11. bp_rp^2_j_h_color
+20:45:41 - INFO -     12. bp_rp^2_h_k_color
+20:45:41 - INFO -     13. bp_rp^2_j_k_color
+20:45:41 - INFO -     14. bp_rp_j_h_color^2
+20:45:41 - INFO -     15. bp_rp_j_h_color_h_k_color
+20:45:41 - INFO -     16. bp_rp_j_h_color_j_k_color
+20:45:41 - INFO -     17. bp_rp_h_k_color_j_k_color
+20:45:41 - INFO -     18. bp_rp_j_k_color^2
+20:45:41 - INFO -     19. bp_rp_x_j_h_color
+20:45:41 - INFO -     20. bp_rp_x_j_k_color
+20:45:41 - INFO -     21. j_h_color_x_j_k_color
+20:45:41 - INFO -     22. log_bp_rp
+20:45:41 - INFO -     23. log_j_h_color
+20:45:41 - INFO -     24. log_j_k_color
+20:45:41 - INFO -     25. cool_bp_rp
+20:45:41 - INFO -     26. mid_bp_rp
+20:45:41 - INFO -     27. hot_j_h_color
+20:45:41 - INFO -     28. mid_j_h_color
+20:45:41 - INFO -     29. hot_j_k_color
+20:45:41 - INFO -     30. cool_j_k_color
+20:45:41 - INFO - 
+Training Random Forest...
+20:45:41 - INFO -   n_estimators: 300
+20:45:41 - INFO -   max_depth: 20
+20:45:41 - INFO -   min_samples_leaf: 4
+20:45:41 - INFO -   min_samples_split: 5
+[Parallel(n_jobs=-1)]: Using backend ThreadingBackend with 16 concurrent workers.
+[Parallel(n_jobs=-1)]: Done  18 tasks      | elapsed:  1.7min
+[Parallel(n_jobs=-1)]: Done 168 tasks      | elapsed:  7.3min
+[Parallel(n_jobs=-1)]: Done 300 out of 300 | elapsed: 10.9min finished
+20:56:35 - INFO -   Training completed in 653.6 seconds
+20:56:35 - INFO - 
+Making predictions...
+[Parallel(n_jobs=16)]: Using backend ThreadingBackend with 16 concurrent workers.
+[Parallel(n_jobs=16)]: Done  18 tasks      | elapsed:    0.4s
+[Parallel(n_jobs=16)]: Done 168 tasks      | elapsed:    2.1s
+[Parallel(n_jobs=16)]: Done 300 out of 300 | elapsed:    3.8s finished
+[Parallel(n_jobs=16)]: Using backend ThreadingBackend with 16 concurrent workers.
+[Parallel(n_jobs=16)]: Done  18 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done 168 tasks      | elapsed:    0.5s
+[Parallel(n_jobs=16)]: Done 300 out of 300 | elapsed:    0.9s finished
+20:56:39 - INFO - 
+======================================================================
+20:56:39 - INFO - MODEL PERFORMANCE
+20:56:39 - INFO - ======================================================================
+20:56:39 - INFO - 
+Training metrics:
+20:56:39 - INFO -   MAE:  584.0 K
+20:56:39 - INFO -   RMSE: 914.9 K
+20:56:39 - INFO -   R²:   0.638
+20:56:39 - INFO - 
+Test metrics:
+20:56:39 - INFO -   MAE:  722.3 K
+20:56:39 - INFO -   RMSE: 1138.0 K
+20:56:39 - INFO -   R²:   0.442
+20:56:39 - INFO -   Mean error: 12.28%
+20:56:39 - INFO -   Median error: 8.86%
+20:56:39 - INFO - 
+Prediction accuracy:
+20:56:39 - INFO -   Within 5%:  30,663 (29.2%)
+20:56:39 - INFO -   Within 10%: 58,150 (55.3%)
+20:56:39 - INFO -   Within 20%: 86,111 (81.9%)
+20:56:39 - INFO - 
+Top 10 most important features:
+20:56:40 - INFO -   bp_rp_j_h_color_j_k_color: 0.3183
+20:56:40 - INFO -   j_h_color_j_k_color: 0.0508
+20:56:40 - INFO -   j_h_color_x_j_k_color: 0.0485
+20:56:40 - INFO -   bp_rp^2_h_k_color: 0.0483
+20:56:40 - INFO -   bp_rp^2_j_h_color: 0.0436
+20:56:40 - INFO -   log_bp_rp: 0.0424
+20:56:40 - INFO -   bp_rp^2: 0.0423
+20:56:40 - INFO -   bp_rp^3: 0.0417
+20:56:40 - INFO -   bp_rp: 0.0416
+20:56:40 - INFO -   bp_rp_h_k_color_j_k_color: 0.0401
+20:56:40 - INFO - 
+======================================================================
+20:56:40 - INFO - SAVING MODEL AND METADATA
+20:56:40 - INFO - ======================================================================
+20:56:40 - INFO - Model ID: rf_gaia_2mass_engineered_20251016_205640
+20:56:41 - INFO -   Model saved: rf_gaia_2mass_engineered_20251016_205640.pkl
+20:56:41 - INFO -   Selector saved: rf_gaia_2mass_engineered_20251016_205640_selector.pkl
+20:56:41 - INFO -   Test predictions saved: rf_gaia_2mass_engineered_20251016_205640_test_predictions.parquet
+20:56:41 - INFO -   Metadata saved: rf_gaia_2mass_engineered_20251016_205640_metadata.json
+20:56:41 - INFO -   Summary saved: rf_gaia_2mass_engineered_20251016_205640_SUMMARY.txt
+20:56:41 - INFO - 
+================================================================================
+20:56:41 - INFO - TRAINING COMPLETED SUCCESSFULLY!
+20:56:41 - INFO - ================================================================================
+20:56:41 - INFO - 
+Model ID: rf_gaia_2mass_engineered_20251016_205640
+20:56:41 - INFO - Test MAE: 722.3 K
+20:56:41 - INFO - Test R²: 0.442
+20:56:41 - INFO - 
+Next steps:
+20:56:41 - INFO -   1. Create validation plots
+20:56:41 - INFO -   2. Predict temperatures for objects without Gaia Teff

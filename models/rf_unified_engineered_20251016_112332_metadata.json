@@ -56,7 +56,7 @@
     }
   },
   "training_time_seconds": 665.659901,
-  "feature_importances": {
+  "feature_importance": {
     "log_bp_rp": 0.16976929188942502,
     "bp_rp": 0.15620139367364463,
     "bp_rp^2": 0.1422357545164263,

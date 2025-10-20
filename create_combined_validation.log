@@ -1,0 +1,49 @@
+20:10:24 - INFO - ================================================================================
+20:10:24 - INFO - CREATE COMBINED MODEL VALIDATION PLOTS
+20:10:24 - INFO - ================================================================================
+20:10:24 - INFO - Model ID: rf_combined_colors_20251018_115824
+20:10:24 - INFO - Models directory: /Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/models
+20:10:24 - INFO - Output directory: /Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/reports/figures/combined_validation
+20:10:24 - INFO - 
+Loading model metadata...
+20:10:24 - INFO -   Features: 8
+20:10:24 - INFO - 
+Loading test predictions...
+20:10:24 - INFO -   Test predictions: 101,726 objects
+20:10:24 - INFO - 
+Loading training data...
+20:10:24 - INFO -   Training data: 508,626 objects
+20:10:24 - INFO - 
+Loading predictions...
+20:10:24 - INFO -   Predictions: 96,100 objects
+20:10:24 - INFO - 
+================================================================================
+20:10:24 - INFO - GENERATING VALIDATION PLOTS
+20:10:24 - INFO - ================================================================================
+20:10:24 - INFO - Creating test scatter plot...
+20:10:25 - INFO -   Saved: /Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/reports/figures/combined_validation/rf_combined_colors_20251018_115824_test_scatter.png
+20:10:25 - INFO - Creating residuals plot...
+20:10:26 - INFO -   Saved: /Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/reports/figures/combined_validation/rf_combined_colors_20251018_115824_residuals.png
+20:10:26 - INFO - Creating performance by temperature plot...
+Traceback (most recent call last):
+  File "/Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/scripts/create_combined_validation_plots.py", line 601, in <module>
+    main()
+    ~~~~^^
+  File "/Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/scripts/create_combined_validation_plots.py", line 573, in main
+    plot_performance_by_temperature(test_preds, model_id, output_dir)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/scripts/create_combined_validation_plots.py", line 175, in plot_performance_by_temperature
+    test_preds = test_preds.with_columns(
+        pl.col('true_temperature').cut(bins, labels=labels).alias('temp_bin')
+    )
+  File "/Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/.venv/lib/python3.13/site-packages/polars/dataframe/frame.py", line 10173, in with_columns
+    .collect(optimizations=QueryOptFlags._eager())
+     ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/.venv/lib/python3.13/site-packages/polars/_utils/deprecation.py", line 97, in wrapper
+    return function(*args, **kwargs)
+  File "/Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/.venv/lib/python3.13/site-packages/polars/lazyframe/opt_flags.py", line 330, in wrapper
+    return function(*args, **kwargs)
+  File "/Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/.venv/lib/python3.13/site-packages/polars/lazyframe/frame.py", line 2407, in collect
+    return wrap_df(ldf.collect(engine, callback))
+                   ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+polars.exceptions.ShapeError: provide len(quantiles) + 1 labels

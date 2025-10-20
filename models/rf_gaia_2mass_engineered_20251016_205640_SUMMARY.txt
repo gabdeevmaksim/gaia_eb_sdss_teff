@@ -1,0 +1,66 @@
+GAIA + 2MASS ENGINEERED FEATURES MODEL
+======================================================================
+
+Model ID: rf_gaia_2mass_engineered_20251016_205640
+Timestamp: 20251016_205640
+
+DATASET:
+  Training samples: 420,590
+  Test samples: 105,148
+  Total features: 56
+  Selected features: 30
+
+PERFORMANCE METRICS:
+  Test MAE:  722.3 K
+  Test RMSE: 1138.0 K
+  Test R²:   0.442
+  Mean error: 12.28%
+  Median error: 8.86%
+
+ACCURACY:
+  Within 5%:  30,663 (29.2%)
+  Within 10%: 58,150 (55.3%)
+  Within 20%: 86,111 (81.9%)
+
+HYPERPARAMETERS:
+  n_estimators: 300
+  max_depth: 20
+  min_samples_leaf: 4
+  min_samples_split: 5
+  random_state: 42
+  n_jobs: -1
+  n_features_select: 30
+
+SELECTED FEATURES:
+   1. bp_rp                                    0.0416
+   2. j_h_color                                0.0122
+   3. j_k_color                                0.0141
+   4. bp_rp^2                                  0.0423
+   5. bp_rp_j_h_color                          0.0141
+   6. bp_rp_j_k_color                          0.0099
+   7. j_h_color^2                              0.0170
+   8. j_h_color_j_k_color                      0.0508
+   9. j_k_color^2                              0.0144
+  10. bp_rp^3                                  0.0417
+  11. bp_rp^2_j_h_color                        0.0436
+  12. bp_rp^2_h_k_color                        0.0483
+  13. bp_rp^2_j_k_color                        0.0266
+  14. bp_rp_j_h_color^2                        0.0310
+  15. bp_rp_j_h_color_h_k_color                0.0188
+  16. bp_rp_j_h_color_j_k_color                0.3183
+  17. bp_rp_h_k_color_j_k_color                0.0401
+  18. bp_rp_j_k_color^2                        0.0199
+  19. bp_rp_x_j_h_color                        0.0141
+  20. bp_rp_x_j_k_color                        0.0100
+  21. j_h_color_x_j_k_color                    0.0485
+  22. log_bp_rp                                0.0424
+  23. log_j_h_color                            0.0122
+  24. log_j_k_color                            0.0132
+  25. cool_bp_rp                               0.0135
+  26. mid_bp_rp                                0.0034
+  27. hot_j_h_color                            0.0246
+  28. mid_j_h_color                            0.0066
+  29. hot_j_k_color                            0.0047
+  30. cool_j_k_color                           0.0023
+
+Training time: 653.6 seconds

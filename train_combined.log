@@ -1,0 +1,103 @@
+11:54:48 - INFO - ================================================================================
+11:54:48 - INFO - TRAIN COMBINED PAN-STARRS + 2MASS + GAIA MODEL
+11:54:48 - INFO - ================================================================================
+11:54:48 - INFO - Loading combined training data: combined_panstarrs_2mass_colors_training.parquet
+11:54:49 - INFO -   Loaded 508,626 training objects
+11:54:49 - INFO -   Columns: 15
+11:54:49 - INFO - 
+Preparing features:
+11:54:49 - INFO -   Color features: 8
+11:54:49 - INFO -     1. bp_rp
+11:54:49 - INFO -     2. g_r_color
+11:54:49 - INFO -     3. r_i_color
+11:54:49 - INFO -     4. i_z_color
+11:54:49 - INFO -     5. B_V_color
+11:54:49 - INFO -     6. j_h_color
+11:54:49 - INFO -     7. h_k_color
+11:54:49 - INFO -     8. j_k_color
+11:54:49 - INFO - 
+  Feature matrix shape: (508626, 8)
+11:54:49 - INFO -   Target shape: (508626,)
+11:54:49 - INFO -   Target range: 2888.2 - 31144.3 K
+11:54:49 - INFO -   Target mean: 5510.7 K
+11:54:49 - INFO - 
+Splitting data (test_size=0.2)...
+11:54:49 - INFO -   Training set: 406,900 samples
+11:54:49 - INFO -   Test set: 101,726 samples
+11:54:49 - INFO - 
+======================================================================
+11:54:49 - INFO - TRAINING RANDOM FOREST MODEL
+11:54:49 - INFO - ======================================================================
+11:54:49 - INFO - 
+Training Random Forest...
+11:54:49 - INFO -   n_estimators: 300
+11:54:49 - INFO -   max_depth: 20
+11:54:49 - INFO -   min_samples_leaf: 4
+11:54:49 - INFO -   min_samples_split: 5
+[Parallel(n_jobs=-1)]: Using backend ThreadingBackend with 16 concurrent workers.
+[Parallel(n_jobs=-1)]: Done  18 tasks      | elapsed:   19.3s
+[Parallel(n_jobs=-1)]: Done 168 tasks      | elapsed:  2.0min
+[Parallel(n_jobs=-1)]: Done 300 out of 300 | elapsed:  3.5min finished
+11:58:17 - INFO -   Training completed in 207.9 seconds
+11:58:17 - INFO - 
+Making predictions...
+[Parallel(n_jobs=16)]: Using backend ThreadingBackend with 16 concurrent workers.
+[Parallel(n_jobs=16)]: Done  18 tasks      | elapsed:    0.5s
+[Parallel(n_jobs=16)]: Done 168 tasks      | elapsed:    2.8s
+[Parallel(n_jobs=16)]: Done 300 out of 300 | elapsed:    5.2s finished
+[Parallel(n_jobs=16)]: Using backend ThreadingBackend with 16 concurrent workers.
+[Parallel(n_jobs=16)]: Done  18 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done 168 tasks      | elapsed:    1.0s
+[Parallel(n_jobs=16)]: Done 300 out of 300 | elapsed:    1.5s finished
+11:58:24 - INFO - 
+======================================================================
+11:58:24 - INFO - MODEL PERFORMANCE
+11:58:24 - INFO - ======================================================================
+11:58:24 - INFO - 
+Training metrics:
+11:58:24 - INFO -   MAE:  531.5 K
+11:58:24 - INFO -   RMSE: 830.0 K
+11:58:24 - INFO -   R²:   0.693
+11:58:24 - INFO - 
+Test metrics:
+11:58:24 - INFO -   MAE:  694.6 K
+11:58:24 - INFO -   RMSE: 1080.3 K
+11:58:24 - INFO -   R²:   0.477
+11:58:24 - INFO -   Mean error: 11.89%
+11:58:24 - INFO -   Median error: 8.59%
+11:58:24 - INFO - 
+Prediction accuracy:
+11:58:24 - INFO -   Within 5%:  30,926 (30.4%)
+11:58:24 - INFO -   Within 10%: 57,441 (56.5%)
+11:58:24 - INFO -   Within 20%: 84,042 (82.6%)
+11:58:24 - INFO - 
+Feature importance:
+11:58:24 - INFO -   j_h_color       0.3795
+11:58:24 - INFO -   bp_rp           0.2354
+11:58:24 - INFO -   h_k_color       0.1205
+11:58:24 - INFO -   i_z_color       0.0759
+11:58:24 - INFO -   r_i_color       0.0589
+11:58:24 - INFO -   j_k_color       0.0568
+11:58:24 - INFO -   g_r_color       0.0366
+11:58:24 - INFO -   B_V_color       0.0364
+11:58:24 - INFO - 
+======================================================================
+11:58:24 - INFO - SAVING MODEL AND METADATA
+11:58:24 - INFO - ======================================================================
+11:58:24 - INFO - Model ID: rf_combined_colors_20251018_115824
+11:58:25 - INFO -   Model saved: rf_combined_colors_20251018_115824.pkl
+11:58:25 - INFO -   Test predictions saved: rf_combined_colors_20251018_115824_test_predictions.parquet
+11:58:25 - INFO -   Metadata saved: rf_combined_colors_20251018_115824_metadata.json
+11:58:25 - INFO -   Summary saved: rf_combined_colors_20251018_115824_SUMMARY.txt
+11:58:25 - INFO - 
+================================================================================
+11:58:25 - INFO - TRAINING COMPLETED SUCCESSFULLY!
+11:58:25 - INFO - ================================================================================
+11:58:25 - INFO - 
+Model ID: rf_combined_colors_20251018_115824
+11:58:25 - INFO - Test MAE: 694.6 K
+11:58:25 - INFO - Test R²: 0.477
+11:58:25 - INFO - 
+Next steps:
+11:58:25 - INFO -   1. Create validation plots
+11:58:25 - INFO -   2. Predict temperatures for objects without Gaia Teff

@@ -629,6 +629,104 @@ predictions = model.predict(X_selected)
 4. **Consistent Features**: Same feature engineering applied to both training and prediction sets
 5. **Better Generalization**: Prediction mean (4,862 K) closer to training mean (5,308 K)
 
+## Model Validation Plots
+
+**All temperature prediction models have standardized 7-plot validation** using the centralized `src/visualization/validation_plots.py` module. This ensures consistent visual style and metrics across all models.
+
+### Validation Plot Set (7 plots per model)
+
+Each model has these standardized validation plots:
+
+1. **Test Scatter** - Predicted vs. Ground Truth with ±10% bounds
+2. **Residuals** - 2-panel residual analysis (vs predicted, vs true)
+3. **Performance by Temperature** - MAE/RMSE/Accuracy across temperature ranges
+4. **Temperature Distributions** - Training vs. Predictions distributions (histogram + CDF)
+5. **Color Distributions** - Multi-panel color distributions comparison
+6. **Color-Temperature Relations** - 3-panel (training, predictions, overlay)
+7. **Feature Importance** - Top 20 most important features
+
+### Validation Scripts
+
+All validation scripts follow the same pattern and use shared plotting functions:
+
+```bash
+# Generate validation plots for a specific model
+python scripts/create_panstarrs_validation_plots.py      # Pan-STARRS only model
+python scripts/create_combined_validation_plots.py       # Combined Pan-STARRS+2MASS+Gaia
+python scripts/create_gaia_2mass_validation_plots.py     # Gaia+2MASS Basic
+python scripts/create_gaia_2mass_engineered_validation_plots.py  # Gaia+2MASS Engineered
+python scripts/create_unified_validation_plots.py        # Unified Pan-STARRS+Gaia
+```
+
+### Current Validation Coverage
+
+**All 5 main models have complete validation (100% coverage)**:
+
+| Model | Features | Validation Directory | Status |
+|-------|----------|---------------------|--------|
+| **Pan-STARRS Only** | g-r, r-i, i-z, B-V, g_mag | `panstarrs_validation/` | ✅ 7 plots |
+| **Combined** | PS colors + 2MASS NIR + BP-RP | `combined_validation/` | ✅ 7 plots |
+| **Gaia+2MASS Basic** | BP-RP + J-H, H-K, J-K | `gaia_2mass_validation/` | ✅ 7 plots |
+| **Gaia+2MASS Engineered** | 30 engineered features | `gaia_2mass_engineered_validation/` | ✅ 7 plots |
+| **Unified** | PS colors + BP-RP (color-only) | `unified_validation/` | ✅ 7 plots |
+
+**Total**: 35 standardized validation plots across 5 models
+
+### Validation Plot Style Standards
+
+All plots follow these conventions (enforced by `src/visualization/validation_plots.py`):
+
+- **DPI 300** for publication quality
+- **Hexbin plots** with log-scale colormaps for density visualization
+- **Color scheme**: Blue for training data, orange for predictions
+- **Inverted Y-axis** for color-temperature relations (astronomical convention: hotter stars at bottom)
+- **Consistent layouts** and figure sizes across all models
+- **Astronomical conventions**: Temperature in Kelvin, colors as magnitude differences
+
+### Creating Validation Plots for New Models
+
+When training a new temperature prediction model, create standardized validation plots:
+
+1. **During training**: Save test predictions as `{MODEL_ID}_test_predictions.parquet`
+2. **Create validation script**: Follow the pattern in existing scripts
+3. **Use shared functions**: Import from `src.visualization.validation_plots`
+4. **Generate all 7 plots**: Ensure consistency with other models
+5. **Organize by model**: Save to `reports/figures/{model_name}_validation/`
+
+**Example script structure**:
+```python
+from src.visualization.validation_plots import (
+    plot_test_scatter,
+    plot_residuals,
+    plot_performance_by_temp,
+    plot_temp_distributions,
+    plot_color_distributions,
+    plot_color_temp_relations,
+    plot_feature_importance,
+    calculate_bin_statistics
+)
+
+# Load data
+test_pred = pd.read_parquet(f'models/{MODEL_ID}_test_predictions.parquet')
+metadata = json.load(open(f'models/{MODEL_ID}_metadata.json'))
+
+# Generate all 7 plots
+plot_test_scatter(test_pred, mae, rmse, r2, MODEL_ID, SUBDIR, MODEL_NAME)
+plot_residuals(test_pred, MODEL_ID, SUBDIR)
+bin_stats = calculate_bin_statistics(test_pred)
+plot_performance_by_temp(test_pred, bin_stats, MODEL_ID, SUBDIR)
+# ... remaining plots
+```
+
+### Model Comparison
+
+See `docs/ALL_MODELS_COMPARISON.md` for detailed performance comparison across all models, including:
+- Performance metrics (MAE, RMSE, R², accuracy within thresholds)
+- Feature importance rankings
+- Training details and hyperparameters
+- Physical insights from color-temperature relationships
+- Recommendations for production use
+
 ## Directory Structure
 
 ```
@@ -656,14 +754,21 @@ predictions = model.predict(X_selected)
 │   ├── predict_temperatures_full_catalog.py # Predict Teff for full catalog
 │   ├── merge_stars_types_with_predictions.py # Merge stars_types.dat with predictions
 │   ├── convert_parquet_to_csv.py          # Convert Parquet to CSV/DAT (standalone)
-│   └── memory_monitor.py                  # System memory monitoring for training
+│   ├── memory_monitor.py                  # System memory monitoring for training
+│   ├── create_panstarrs_validation_plots.py      # Pan-STARRS model validation plots
+│   ├── create_combined_validation_plots.py       # Combined model validation plots
+│   ├── create_gaia_2mass_validation_plots.py     # Gaia+2MASS Basic validation plots
+│   ├── create_gaia_2mass_engineered_validation_plots.py  # Gaia+2MASS Engineered validation plots
+│   └── create_unified_validation_plots.py        # Unified model validation plots
 ├── src/                        # Source code modules
 │   ├── data/                   # Data handling utilities
 │   │   ├── load_data.py       # Multi-format data loader
 │   │   └── cache_manager.py   # Caching system
 │   ├── visualization/          # Plotting and visualization
-│   │   └── plots.py           # Astronomical plots, sky maps
-│   ├── features/              # Feature engineering (placeholder)
+│   │   ├── plots.py           # Astronomical plots, sky maps
+│   │   └── validation_plots.py # Standardized model validation plots
+│   ├── features/              # Feature engineering
+│   │   └── engineering.py     # Reusable feature engineering functions
 │   └── models/                # Machine learning models (placeholder)
 ├── notebooks/                  # Jupyter notebooks
 │   ├── eclipsing_binary_analysis.ipynb          # Main analysis notebook
