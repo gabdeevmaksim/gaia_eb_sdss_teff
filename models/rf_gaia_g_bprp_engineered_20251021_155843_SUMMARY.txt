@@ -1,0 +1,45 @@
+================================================================================
+Model: rf_gaia_g_bprp_engineered_20251021_155843
+================================================================================
+
+FEATURES:
+  Base: phot_g_mean_mag, bp_rp
+  Engineered: 17 total features
+    - Polynomial terms
+    - Interaction terms
+    - Logarithmic transforms
+    - Temperature-dependent features
+
+DATASET:
+  Training samples: 589,613
+  Test samples: 147,404
+
+TEST SET PERFORMANCE:
+  MAE:  573.4 K
+  RMSE: 998.8 K
+  R²:   0.514
+  Within 10%: 65.1%
+
+TOP 10 FEATURE IMPORTANCE:
+  phot_g_mean_mag          : 0.2084 (20.8%)
+  g_mag^3                  : 0.1892 (18.9%)
+  g_mag^2_bp_rp            : 0.1662 (16.6%)
+  g_mag^2                  : 0.1558 (15.6%)
+  log_bp_rp                : 0.0383 (3.8%)
+  bp_rp^2                  : 0.0379 (3.8%)
+  bp_rp^3                  : 0.0351 (3.5%)
+  bp_rp_per_g_mag          : 0.0332 (3.3%)
+  bp_rp                    : 0.0315 (3.2%)
+  mid_g_mag                : 0.0312 (3.1%)
+
+PERFORMANCE BY TEMPERATURE RANGE:
+  3008-4273 K (n=29,481):
+    MAE=360 K, RMSE=592 K, R²=-5.941, Within 10%=72.2%
+  4273-4766 K (n=29,480):
+    MAE=342 K, RMSE=532 K, R²=-11.997, Within 10%=76.0%
+  4766-5211 K (n=29,481):
+    MAE=391 K, RMSE=555 K, R²=-15.914, Within 10%=69.4%
+  5211-6025 K (n=29,481):
+    MAE=453 K, RMSE=568 K, R²=-5.098, Within 10%=63.9%
+  6025-31145 K (n=29,481):
+    MAE=1322 K, RMSE=1929 K, R²=-0.688, Within 10%=43.9%

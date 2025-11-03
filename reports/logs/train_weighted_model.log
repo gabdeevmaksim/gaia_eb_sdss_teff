@@ -1,0 +1,77 @@
+2025-10-21 14:19:25 - INFO - ======================================================================
+2025-10-21 14:19:25 - INFO - WEIGHTED BASIC COLORS MODEL TRAINING
+2025-10-21 14:19:25 - INFO - ======================================================================
+2025-10-21 14:19:25 - INFO - Features: ['g_r_color', 'r_i_color', 'i_z_color', 'bp_rp']
+2025-10-21 14:19:25 - INFO - Using distribution-matched sample weights
+
+2025-10-21 14:19:25 - INFO - Loading weighted training data...
+2025-10-21 14:19:27 - INFO - Loaded 701,644 training samples
+2025-10-21 14:19:27 - INFO - After removing missing values: 701,644 samples
+2025-10-21 14:19:27 - INFO - Preparing features and target...
+2025-10-21 14:19:27 - INFO - Feature matrix shape: (701644, 4)
+2025-10-21 14:19:27 - INFO - Target shape: (701644,)
+2025-10-21 14:19:27 - INFO - Weights shape: (701644,)
+2025-10-21 14:19:27 - INFO -   g_r_color: mean=0.989, std=0.406
+2025-10-21 14:19:27 - INFO -   r_i_color: mean=0.530, std=0.291
+2025-10-21 14:19:27 - INFO -   i_z_color: mean=0.303, std=0.198
+2025-10-21 14:19:27 - INFO -   bp_rp: mean=1.656, std=0.497
+2025-10-21 14:19:27 - INFO - Target: mean=4936.9 K, std=1350.1 K
+2025-10-21 14:19:27 - INFO - 
+Splitting data (test_size=0.2)...
+2025-10-21 14:19:27 - INFO - Training samples: 561,315
+2025-10-21 14:19:27 - INFO - Test samples: 140,329
+2025-10-21 14:19:27 - INFO - Effective training samples (weighted): 307935
+2025-10-21 14:19:27 - INFO - Effective test samples (weighted): 74130
+2025-10-21 14:19:27 - INFO - ======================================================================
+2025-10-21 14:19:27 - INFO - TRAINING RANDOM FOREST MODEL
+2025-10-21 14:19:27 - INFO - ======================================================================
+2025-10-21 14:19:27 - INFO - Hyperparameters:
+2025-10-21 14:19:27 - INFO -   n_estimators: 300
+2025-10-21 14:19:27 - INFO -   max_depth: 20
+2025-10-21 14:19:27 - INFO -   min_samples_leaf: 4
+2025-10-21 14:19:27 - INFO -   min_samples_split: 5
+2025-10-21 14:19:27 - INFO -   random_state: 42
+2025-10-21 14:19:27 - INFO - 
+Training with sample weights...
+2025-10-21 14:19:27 - INFO -   Effective training samples: 307935
+2025-10-21 14:23:54 - INFO - 
+Training completed in 266.9 seconds (4.4 minutes)
+2025-10-21 14:23:54 - INFO - ======================================================================
+2025-10-21 14:23:54 - INFO - MODEL EVALUATION
+2025-10-21 14:23:54 - INFO - ======================================================================
+2025-10-21 14:24:09 - INFO - 
+Training Set (weighted):
+2025-10-21 14:24:09 - INFO -   MAE:  668.8 K
+2025-10-21 14:24:09 - INFO -   RMSE: 1022.7 K
+2025-10-21 14:24:09 - INFO -   R²:   0.425
+2025-10-21 14:24:12 - INFO - 
+Test Set (weighted):
+2025-10-21 14:24:12 - INFO -   MAE:  795.0 K
+2025-10-21 14:24:12 - INFO -   RMSE: 1211.7 K
+2025-10-21 14:24:12 - INFO -   R²:   0.202
+2025-10-21 14:24:12 - INFO - 
+Accuracy (weighted):
+2025-10-21 14:24:12 - INFO -   Within 5%:  27009 / 140197 (19.3%)
+2025-10-21 14:24:12 - INFO -   Within 10%: 56689 / 140197 (40.4%)
+2025-10-21 14:24:12 - INFO -   Within 20%: 104033 / 140197 (74.2%)
+2025-10-21 14:24:12 - INFO - 
+Feature Importance:
+2025-10-21 14:24:13 - INFO -   g_r_color      : 0.2381
+2025-10-21 14:24:13 - INFO -   r_i_color      : 0.1520
+2025-10-21 14:24:13 - INFO -   i_z_color      : 0.1511
+2025-10-21 14:24:13 - INFO -   bp_rp          : 0.4589
+2025-10-21 14:24:13 - INFO - ======================================================================
+2025-10-21 14:24:13 - INFO - SAVING MODEL
+2025-10-21 14:24:13 - INFO - ======================================================================
+2025-10-21 14:24:16 - INFO - ✓ Saved model: /Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/models/rf_weighted_basic_colors_20251021_142413.pkl
+2025-10-21 14:24:16 - INFO - ✓ Saved metadata: /Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/models/rf_weighted_basic_colors_20251021_142413_metadata.json
+2025-10-21 14:24:17 - INFO - ✓ Saved summary: /Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/models/rf_weighted_basic_colors_20251021_142413_SUMMARY.txt
+2025-10-21 14:24:17 - INFO - 
+======================================================================
+2025-10-21 14:24:17 - INFO - TRAINING COMPLETE
+2025-10-21 14:24:17 - INFO - ======================================================================
+2025-10-21 14:24:17 - INFO - Model ID: rf_weighted_basic_colors_20251021_142413
+2025-10-21 14:24:17 - INFO - Test MAE: 795.0 K
+2025-10-21 14:24:17 - INFO - Test RMSE: 1211.7 K
+2025-10-21 14:24:17 - INFO - Test R²: 0.202
+2025-10-21 14:24:17 - INFO - Within 10%: 40.4%

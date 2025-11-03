@@ -377,6 +377,16 @@ python scripts/train_model_unified_features.py --model-type engineered --n-estim
 python scripts/predict_unified_features.py --model models/rf_unified_engineered_YYYYMMDD_HHMMSS.pkl
 ```
 
+**Ensemble Models**:
+```bash
+# Create ensemble by combining PanSTARRS Basic + Unified Color-Only
+# Loads both models and predicts on same test set
+python scripts/create_ensemble_panstarrs_unified.py
+
+# Generate validation plots for ensemble (5 plots)
+python scripts/create_ensemble_panstarrs_unified_validation_plots.py
+```
+
 **Spectroscopic Validation**:
 ```bash
 # Download APOGEE DR17 and GALAH DR3 spectroscopic catalogs
@@ -589,7 +599,7 @@ from src.features import engineer_all_features
   - **45% improvement** over basic model
   - Objects within 10%: significantly improved
 
-- **Color-Only RF Model** (rf_unified_engineered_20251016_112332) - **RECOMMENDED**:
+- **Color-Only RF Model** (rf_unified_engineered_20251016_112332) - **RECOMMENDED for single model**:
   - Features: 20 selected from 85 color-only features (NO magnitude features to avoid bias)
   - Colors: g-r, r-i, i-z, B-V, BP-RP with polynomial, interaction, log, and temperature-dependent transforms
   - Test MAE: 765.1 K, RMSE: 1168.4 K, R²: 0.315
@@ -600,50 +610,26 @@ from src.features import engineer_all_features
   - Training: 701,644 objects | Predictions: 401,111 objects
   - Prediction mean: 4,862 K (much closer to training mean of 5,308 K, no magnitude bias)
 
-**Model Usage**:
-```python
-import joblib
-import pandas as pd
+- **Ensemble Model** (ensemble_panstarrs_unified) - **BEST OVERALL**:
+  - Combines PanSTARRS Basic (with magnitude) + Unified Color-Only (no magnitude)
+  - Method: Simple average of predictions on same test set
+  - Test MAE: 720.4 K (4% better than best individual model)
+  - RMSE: 1183.7 K, R²: 0.297, Within 10%: 53.0%
+  - **Strength**: Balances magnitude-based accuracy with color-based physical correctness
+  - Cool stars (<5000K): PanSTARRS dominates | Hot stars (>5000K): Unified dominates
+  - Script: `scripts/create_ensemble_panstarrs_unified.py`
+  - Validation: `scripts/create_ensemble_panstarrs_unified_validation_plots.py` (5 plots)
 
-# Load color-only model (RECOMMENDED)
-model = joblib.load('models/rf_unified_engineered_20251016_112332.pkl')
-selector = joblib.load('models/rf_unified_engineered_20251016_112332_selector.pkl')
+**Model Usage**: See individual model metadata and `docs/UNIFIED_FEATURES_WORKFLOW.md` for details.
 
-# Load prediction data with unified features
-data = pd.read_parquet('data/processed/eb_unified_features_engineered_predict.parquet')
-
-# Extract features (exclude ID and target columns)
-feature_cols = [col for col in data.columns
-                if col not in ['original_ext_source_id', 'gaia_source_id', 'teff_gspphot']]
-X = data[feature_cols].values
-
-# Apply feature selector and predict
-X_selected = selector.transform(X)
-predictions = model.predict(X_selected)
-```
-
-**Why Use the Color-Only Model?**:
-1. **Physically Correct**: Based on spectral energy distribution (colors), not brightness
-2. **No Magnitude Bias**: Predictions are independent of object brightness/distance
-3. **High Data Quality**: All objects have valid BP-RP colors (no missing critical features)
-4. **Consistent Features**: Same feature engineering applied to both training and prediction sets
-5. **Better Generalization**: Prediction mean (4,862 K) closer to training mean (5,308 K)
+**Model Selection Guide**:
+- **Best overall**: Ensemble (MAE 720K) - balances accuracy and physical correctness
+- **Best single model**: Color-Only (MAE 765K) - physically correct, no magnitude bias
+- **Lowest MAE**: Feature-Engineered (MAE 318K) - but includes magnitude, may have bias
 
 ## Model Validation Plots
 
-**All temperature prediction models have standardized 7-plot validation** using the centralized `src/visualization/validation_plots.py` module. This ensures consistent visual style and metrics across all models.
-
-### Validation Plot Set (7 plots per model)
-
-Each model has these standardized validation plots:
-
-1. **Test Scatter** - Predicted vs. Ground Truth with ±10% bounds
-2. **Residuals** - 2-panel residual analysis (vs predicted, vs true)
-3. **Performance by Temperature** - MAE/RMSE/Accuracy across temperature ranges
-4. **Temperature Distributions** - Training vs. Predictions distributions (histogram + CDF)
-5. **Color Distributions** - Multi-panel color distributions comparison
-6. **Color-Temperature Relations** - 3-panel (training, predictions, overlay)
-7. **Feature Importance** - Top 20 most important features
+**Standardized validation plots** (via `src/visualization/validation_plots.py`): Test scatter, residuals, performance by temp, distributions, color-temp relations, feature importance. See individual model validation directories in `reports/figures/`.
 
 ### Validation Scripts
 
@@ -656,11 +642,12 @@ python scripts/create_combined_validation_plots.py       # Combined Pan-STARRS+2
 python scripts/create_gaia_2mass_validation_plots.py     # Gaia+2MASS Basic
 python scripts/create_gaia_2mass_engineered_validation_plots.py  # Gaia+2MASS Engineered
 python scripts/create_unified_validation_plots.py        # Unified Pan-STARRS+Gaia
+python scripts/create_ensemble_panstarrs_unified_validation_plots.py  # Ensemble model
 ```
 
 ### Current Validation Coverage
 
-**All 5 main models have complete validation (100% coverage)**:
+**All models have complete validation**:
 
 | Model | Features | Validation Directory | Status |
 |-------|----------|---------------------|--------|
@@ -669,63 +656,13 @@ python scripts/create_unified_validation_plots.py        # Unified Pan-STARRS+Ga
 | **Gaia+2MASS Basic** | BP-RP + J-H, H-K, J-K | `gaia_2mass_validation/` | ✅ 7 plots |
 | **Gaia+2MASS Engineered** | 30 engineered features | `gaia_2mass_engineered_validation/` | ✅ 7 plots |
 | **Unified** | PS colors + BP-RP (color-only) | `unified_validation/` | ✅ 7 plots |
+| **Ensemble** | PanSTARRS + Unified average | `ensemble_panstarrs_unified_validation/` | ✅ 5 plots |
 
-**Total**: 35 standardized validation plots across 5 models
+**Total**: 40 validation plots (35 standard + 5 ensemble-specific)
 
-### Validation Plot Style Standards
+**Plot standards**: DPI 300, hexbin density plots, consistent color schemes. See `src/visualization/validation_plots.py` for implementation.
 
-All plots follow these conventions (enforced by `src/visualization/validation_plots.py`):
-
-- **DPI 300** for publication quality
-- **Hexbin plots** with log-scale colormaps for density visualization
-- **Color scheme**: Blue for training data, orange for predictions
-- **Inverted Y-axis** for color-temperature relations (astronomical convention: hotter stars at bottom)
-- **Consistent layouts** and figure sizes across all models
-- **Astronomical conventions**: Temperature in Kelvin, colors as magnitude differences
-
-### Creating Validation Plots for New Models
-
-When training a new temperature prediction model, create standardized validation plots:
-
-1. **During training**: Save test predictions as `{MODEL_ID}_test_predictions.parquet`
-2. **Create validation script**: Follow the pattern in existing scripts
-3. **Use shared functions**: Import from `src.visualization.validation_plots`
-4. **Generate all 7 plots**: Ensure consistency with other models
-5. **Organize by model**: Save to `reports/figures/{model_name}_validation/`
-
-**Example script structure**:
-```python
-from src.visualization.validation_plots import (
-    plot_test_scatter,
-    plot_residuals,
-    plot_performance_by_temp,
-    plot_temp_distributions,
-    plot_color_distributions,
-    plot_color_temp_relations,
-    plot_feature_importance,
-    calculate_bin_statistics
-)
-
-# Load data
-test_pred = pd.read_parquet(f'models/{MODEL_ID}_test_predictions.parquet')
-metadata = json.load(open(f'models/{MODEL_ID}_metadata.json'))
-
-# Generate all 7 plots
-plot_test_scatter(test_pred, mae, rmse, r2, MODEL_ID, SUBDIR, MODEL_NAME)
-plot_residuals(test_pred, MODEL_ID, SUBDIR)
-bin_stats = calculate_bin_statistics(test_pred)
-plot_performance_by_temp(test_pred, bin_stats, MODEL_ID, SUBDIR)
-# ... remaining plots
-```
-
-### Model Comparison
-
-See `docs/ALL_MODELS_COMPARISON.md` for detailed performance comparison across all models, including:
-- Performance metrics (MAE, RMSE, R², accuracy within thresholds)
-- Feature importance rankings
-- Training details and hyperparameters
-- Physical insights from color-temperature relationships
-- Recommendations for production use
+**Model comparison**: See `docs/ALL_MODELS_COMPARISON.md` for detailed performance metrics, feature importance, and recommendations.
 
 ## Directory Structure
 
@@ -755,11 +692,13 @@ See `docs/ALL_MODELS_COMPARISON.md` for detailed performance comparison across a
 │   ├── merge_stars_types_with_predictions.py # Merge stars_types.dat with predictions
 │   ├── convert_parquet_to_csv.py          # Convert Parquet to CSV/DAT (standalone)
 │   ├── memory_monitor.py                  # System memory monitoring for training
+│   ├── create_ensemble_panstarrs_unified.py      # Create ensemble model (PanSTARRS + Unified)
 │   ├── create_panstarrs_validation_plots.py      # Pan-STARRS model validation plots
 │   ├── create_combined_validation_plots.py       # Combined model validation plots
 │   ├── create_gaia_2mass_validation_plots.py     # Gaia+2MASS Basic validation plots
 │   ├── create_gaia_2mass_engineered_validation_plots.py  # Gaia+2MASS Engineered validation plots
-│   └── create_unified_validation_plots.py        # Unified model validation plots
+│   ├── create_unified_validation_plots.py        # Unified model validation plots
+│   └── create_ensemble_panstarrs_unified_validation_plots.py  # Ensemble validation plots
 ├── src/                        # Source code modules
 │   ├── data/                   # Data handling utilities
 │   │   ├── load_data.py       # Multi-format data loader
@@ -788,7 +727,9 @@ See `docs/ALL_MODELS_COMPARISON.md` for detailed performance comparison across a
 │   ├── rf_temperature_regressor_*.pkl           # Random Forest models
 │   ├── rf_temperature_regressor_*_metadata.json # Model configurations
 │   ├── rf_temperature_regressor_*_SUMMARY.txt   # Performance summaries
-│   └── rf_temperature_regressor_*_test_predictions.parquet  # Test predictions
+│   ├── rf_temperature_regressor_*_test_predictions.parquet  # Test predictions
+│   ├── ensemble_*_test_predictions.parquet      # Ensemble model predictions
+│   └── ensemble_*_SUMMARY.txt                   # Ensemble performance summaries
 ├── data/                       # Data storage
 │   ├── raw/                   # Original ECSV files
 │   ├── processed/             # Converted Parquet files
@@ -882,183 +823,18 @@ For complete ML project patterns and templates, refer to `.cursorrules`.
 
 ## Unified Features Workflow
 
-### Overview
+**Purpose**: Ensures consistent feature engineering across training and prediction sets, eliminating distribution mismatch.
 
-The unified features workflow ensures **consistent feature engineering** across training and prediction sets. This approach solves the critical problem of feature distribution mismatch between objects with Gaia Teff (training) and objects without Gaia Teff (prediction).
+**Steps**:
+1. Create unified features: `python scripts/create_unified_feature_dataset.py --model-type engineered`
+2. Train model: `python scripts/train_model_unified_features.py --model-type engineered`
+3. Generate predictions: `python scripts/predict_unified_features.py --model [MODEL.pkl]`
+4. Validate: `jupyter lab notebooks/unified_features_no_gpsf_model_validation.ipynb`
 
-### Key Advantages
+**Key points**:
+- Applies same transformations to ALL objects (train + predict)
+- Color-only model (no magnitude) avoids brightness bias
+- Filters outliers before feature engineering
+- Validates distributions with KS tests
 
-1. **Consistent Feature Engineering**: Same transformations applied to ALL objects
-2. **No Distribution Mismatch**: Train and predict sets derived from same processing pipeline
-3. **Data Quality Control**: Outlier filtering and missing value handling applied uniformly
-4. **Physical Correctness**: Color-only model avoids magnitude bias
-5. **Reproducibility**: Single source of truth for feature engineering
-
-### Workflow Steps
-
-#### Step 1: Create Unified Feature Dataset
-
-```bash
-python scripts/create_unified_feature_dataset.py --model-type engineered
-```
-
-**What it does**:
-- Loads complete catalog (1.17M objects from `gaia_eb_panstarrs_phot_with_temperatures.parquet`)
-- Applies consistent outlier filtering to base features BEFORE feature engineering
-- Creates engineered features: polynomial (degree 3), interactions, log transforms, temperature-dependent
-- **Removes magnitude features** (gPSFMag) to avoid magnitude bias
-- Filters objects with missing critical colors (requires g-r, r-i, i-z, BP-RP)
-- Removes objects with bp_rp=0 (missing Gaia BP-RP colors)
-- Splits into training (with Gaia Teff) and prediction (without Gaia Teff) sets
-- Validates distributions between train/predict sets with KS tests
-
-**Output files**:
-- `eb_unified_features_engineered.parquet` - Complete dataset (1.1M objects, 85 features)
-- `eb_unified_features_engineered_train.parquet` - Training set (701k objects)
-- `eb_unified_features_engineered_predict.parquet` - Prediction set (401k objects)
-- `eb_unified_features_engineered_SUMMARY.txt` - Dataset creation summary
-- `reports/figures/feature_validation/feature_distributions_comparison.png` - Distribution comparison plots
-- `reports/figures/feature_validation/feature_comparison_statistics.csv` - KS/t-test statistics
-
-#### Step 2: Train Model on Unified Features
-
-```bash
-python scripts/train_model_unified_features.py --model-type engineered \
-    --n-estimators 300 --max-depth 20 --n-features 20
-```
-
-**What it does**:
-- Loads training set with unified features
-- Applies SelectKBest feature selection (f_regression scoring)
-- Trains Random Forest with specified hyperparameters
-- Evaluates on hold-out test set (20% split)
-- Saves model, selector, metadata, and test predictions
-
-**Output files**:
-- `rf_unified_engineered_YYYYMMDD_HHMMSS.pkl` - Trained model
-- `rf_unified_engineered_YYYYMMDD_HHMMSS_selector.pkl` - Feature selector
-- `rf_unified_engineered_YYYYMMDD_HHMMSS_metadata.json` - Model configuration
-- `rf_unified_engineered_YYYYMMDD_HHMMSS_SUMMARY.txt` - Performance metrics
-- `rf_unified_engineered_YYYYMMDD_HHMMSS_test_predictions.parquet` - Test set predictions
-
-#### Step 3: Generate Predictions
-
-```bash
-python scripts/predict_unified_features.py \
-    --model models/rf_unified_engineered_20251016_112332.pkl
-```
-
-**What it does**:
-- Loads prediction set with unified features
-- Applies the same feature selector used during training
-- Generates temperature predictions for all objects without Gaia Teff
-- Saves predictions with all input features
-
-**Output file**:
-- `predictions_rf_unified_engineered_YYYYMMDD_HHMMSS.parquet` - 401k predictions with features
-
-#### Step 4: Validate Model (Jupyter Notebook)
-
-```bash
-jupyter lab notebooks/unified_features_no_gpsf_model_validation.ipynb
-```
-
-**What the notebook does**:
-- Loads test predictions and compares with ground truth
-- Analyzes performance by temperature range
-- Compares temperature distributions (train vs predict)
-- Compares color distributions to understand sample differences
-- Creates HR diagrams (using gPSFMag for visualization only)
-- Displays feature importance
-- Generates validation figures in `reports/figures/validation/`
-
-### Data Quality Checks
-
-**Outlier Filtering (before feature engineering)**:
-```python
-color_limits = {
-    'g_r_color': (-0.5, 3.0),    # Typical stellar colors
-    'r_i_color': (-0.5, 2.0),
-    'i_z_color': (-0.5, 1.5),
-    'B_V_color': (-0.5, 3.0),
-    'bp_rp': (-0.5, 4.0)
-}
-```
-
-**Required Features**:
-- All objects must have: g-r, r-i, i-z, B-V, BP-RP colors
-- Objects with bp_rp=0 (missing Gaia BP-RP) are removed
-- This ensures all predictions use complete feature sets
-
-**Distribution Validation**:
-- KS tests compare train/predict distributions for each feature
-- t-tests compare means
-- Plots show overlapping histograms for visual validation
-- Statistics saved to CSV for review
-
-### Color-Only Model vs Magnitude Model
-
-| Aspect | Color-Only Model (RECOMMENDED) | Magnitude Model |
-|--------|-------------------------------|-----------------|
-| **Features** | 85 color-only features | 86 features (including gPSFMag) |
-| **Magnitude bias** | None - predictions independent of brightness | Strong - 57% feature importance on gPSFMag |
-| **Test R²** | 0.315 | 0.543 |
-| **Test MAE** | 765 K | 550 K |
-| **Physical correctness** | ✓ Based on SED (colors) | ✗ Brightness-dependent |
-| **Prediction mean** | 4,862 K (close to training: 5,308 K) | 4,437 K (878 K systematic error) |
-| **Data quality** | All objects have valid BP-RP | Includes objects with missing BP-RP |
-| **Best for** | Science applications, fainter objects | Internal validation only |
-
-**Why the color-only model has lower R² but is better**:
-- R² is calculated on test set, which has similar magnitude distribution to training
-- The magnitude model overfits to brightness, giving high R² on test but biased predictions
-- The color-only model generalizes better to objects with different magnitude distributions
-- Physically, temperature should be determined by SED (colors), not by brightness
-
-### Model Files
-
-**Current recommended model**: `rf_unified_engineered_20251016_112332`
-- Training: 701,644 objects
-- Predictions: 401,111 objects
-- Test MAE: 765.1 K, R²: 0.315
-- Within 10%: 43.4% of test objects
-- BP-RP features: ~60% combined importance
-- All predictions have valid BP-RP colors (no zeros)
-
-### Troubleshooting
-
-**Issue**: Distribution comparison shows wide x-axis ranges
-
-**Cause**: Outliers in original features amplified by polynomial transforms
-
-**Solution**: Filter outliers in BASE features before feature engineering (already implemented)
-
----
-
-**Issue**: Zero bp_rp values in predictions
-
-**Cause**: Some objects missing Gaia BP-RP photometry
-
-**Solution**: Filter out objects with bp_rp=0 in Step 1 (already implemented)
-
----
-
-**Issue**: Prediction mean temperature differs from training mean
-
-**Cause**: Magnitude bias if using magnitude features, OR real physical difference in samples
-
-**Solution**: Use color-only model to eliminate magnitude bias. Remaining difference reflects true sample differences (prediction set is redder/cooler)
-
-### Validation Notebooks
-
-**For magnitude model validation**:
-- `notebooks/unified_features_model_validation.ipynb`
-- Shows impact of magnitude features (57% importance on gPSFMag)
-- Demonstrates systematic bias toward fainter objects
-
-**For color-only model validation** (RECOMMENDED):
-- `notebooks/unified_features_no_gpsf_model_validation.ipynb`
-- Validates physically correct color-based predictions
-- Shows BP-RP feature dominance (~60% importance)
-- Demonstrates no magnitude bias
-- Loads gPSFMag separately for HRD visualization only
+**See `docs/UNIFIED_FEATURES_WORKFLOW.md` for complete details.**

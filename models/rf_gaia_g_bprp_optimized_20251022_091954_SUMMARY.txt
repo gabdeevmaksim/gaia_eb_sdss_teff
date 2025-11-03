@@ -1,0 +1,29 @@
+================================================================================
+Model: rf_gaia_g_bprp_optimized_20251022_091954
+================================================================================
+
+HYPERPARAMETER OPTIMIZATION (with Checkpointing)
+
+Search iterations: 50
+Cross-validation folds: 5
+CPU cores used: 16 (half of available)
+Best CV MAE: 659.3 K
+
+BEST HYPERPARAMETERS:
+  bootstrap: False
+  max_depth: 30
+  max_features: None
+  min_samples_leaf: 2
+  min_samples_split: 10
+  n_estimators: 300
+
+TEST SET PERFORMANCE:
+  MAE:  659.5 K
+  RMSE: 1158.2 K
+  R²:   0.346
+  Within 10%: 62.8%
+
+COMPARISON:
+  Default model: MAE=573.5 K
+  Optimized model: MAE=659.5 K
+  Improvement: -14.99%

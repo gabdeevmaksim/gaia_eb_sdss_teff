@@ -1,0 +1,57 @@
+PAN-STARRS + GAIA + 2MASS (with g magnitude) MODEL
+======================================================================
+
+Model ID: rf_ps_gaia_2mass_gmag_20251020_142522
+Timestamp: 20251020_142522
+
+DATASET:
+  Training samples: 406,896
+  Test samples: 101,725
+  Features: 8 (7 colors + 1 magnitude)
+
+FEATURES (8 total):
+  Optical colors (4):
+    - bp_rp (Gaia BP-RP)
+    - g_r_color, r_i_color, i_z_color (Pan-STARRS)
+  NIR colors (3):
+    - j_h_color, h_k_color, j_k_color (2MASS)
+  Magnitude (1):
+    - phot_g_mean_mag (Gaia g-band)
+
+PERFORMANCE METRICS:
+  Test MAE:  578.2 K
+  Test RMSE: 938.8 K
+  Test R²:   0.605
+  Mean error: 9.60%
+  Median error: 6.81%
+
+ACCURACY:
+  Within 5%:  39,573 (38.9%)
+  Within 10%: 66,439 (65.3%)
+  Within 20%: 89,789 (88.3%)
+
+HYPERPARAMETERS:
+  n_estimators: 300
+  max_depth: 20
+  min_samples_leaf: 4
+  min_samples_split: 5
+  random_state: 42
+  n_jobs: -1
+
+FEATURE IMPORTANCE:
+  phot_g_mean_mag      0.4602
+  j_h_color            0.1957
+  bp_rp                0.1499
+  i_z_color            0.0505
+  g_r_color            0.0426
+  r_i_color            0.0404
+  j_k_color            0.0305
+  h_k_color            0.0302
+
+Training time: 149.1 seconds
+
+======================================================================
+NOTES:
+- This model includes Gaia g magnitude
+- May exhibit magnitude/distance bias
+- Compare with color-only unified model to assess magnitude impact

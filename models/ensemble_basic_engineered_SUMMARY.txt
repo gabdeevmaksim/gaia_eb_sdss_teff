@@ -1,0 +1,44 @@
+ENSEMBLE MODEL - BASIC COLORS vs ENGINEERED FEATURES
+======================================================================
+
+Ensemble ID: ensemble_basic_engineered
+Method: Simple average of two models
+
+COMPONENT MODELS:
+  Model 1: Basic Pan-STARRS Colors
+    ID: rf_temperature_regressor_20251001_125556
+    Features: 5 (g-r, r-i, i-z, B-V, gPSFMag)
+    MAE: 575.6 K, RMSE: 983.2 K, R²: 0.522
+    Within 10%: 65.5%
+
+  Model 2: Engineered Features
+    ID: rf_temperature_regressor_feature_engineering_20251002_210423
+    Features: 20 engineered features
+    MAE: 317.8 K, RMSE: 523.7 K, R²: 0.864
+    Within 10%: 82.7%
+
+ENSEMBLE PERFORMANCE:
+  Test objects: 141,200
+  MAE:  403.6 K
+  RMSE: 664.4 K
+  R²:   0.782
+  Within 10%: 74.8%
+
+RESULT:
+  Ensemble performance: -27.0% vs best
+
+PERFORMANCE BY TEMPERATURE RANGE:
+  Range          Count      Basic  Engineered   Ensemble       Best
+  ----------------------------------------------------------------------
+  <4000K         16,862     347.2 K      220.3 K      282.6 K   Engineered
+  4000-5000K     55,814     354.1 K      173.0 K      234.6 K   Engineered
+  5000-6000K     39,814     477.6 K      308.3 K      368.6 K   Engineered
+  6000-7000K     12,256     519.2 K      366.8 K      404.9 K   Engineered
+  7000-8000K      8,007     930.5 K      982.6 K      928.2 K     Ensemble
+  >8000K          8,447    2703.1 K      812.1 K     1428.2 K   Engineered
+
+NOTES:
+  - Basic model uses 5 simple color features
+  - Engineered model uses 20 polynomial/interaction features
+  - Ensemble combines predictions via simple averaging
+  - Goal: Reduce systematic bias in temperature extremes

@@ -1,0 +1,33 @@
+================================================================================
+Model: rf_gaia_g_bprp_20251021_154245
+================================================================================
+
+FEATURES:
+  - phot_g_mean_mag (Gaia G-band magnitude)
+  - bp_rp (Gaia BP-RP color)
+
+DATASET:
+  Training samples: 589,613
+  Test samples: 147,404
+
+TEST SET PERFORMANCE:
+  MAE:  573.5 K
+  RMSE: 999.3 K
+  R²:   0.513
+  Within 10%: 65.1%
+
+FEATURE IMPORTANCE:
+  phot_g_mean_mag     : 0.6405 (64.1%)
+  bp_rp               : 0.3595 (35.9%)
+
+PERFORMANCE BY TEMPERATURE RANGE:
+  3008-4273 K (n=29,481):
+    MAE=359 K, RMSE=591 K, R²=-5.913, Within 10%=72.2%
+  4273-4766 K (n=29,480):
+    MAE=341 K, RMSE=531 K, R²=-11.925, Within 10%=76.0%
+  4766-5211 K (n=29,481):
+    MAE=391 K, RMSE=555 K, R²=-15.912, Within 10%=69.4%
+  5211-6025 K (n=29,481):
+    MAE=453 K, RMSE=570 K, R²=-5.137, Within 10%=64.2%
+  6025-31145 K (n=29,481):
+    MAE=1324 K, RMSE=1931 K, R²=-0.691, Within 10%=43.8%

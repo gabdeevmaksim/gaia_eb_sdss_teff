@@ -1,0 +1,41 @@
+RANDOM FOREST MODEL - WEIGHTED BASIC COLORS
+======================================================================
+
+Model ID: rf_weighted_basic_colors_20251021_142413
+Timestamp: 20251021_142413
+Weighted Training: Yes (distribution-matched)
+
+FEATURES:
+  - g_r_color
+  - r_i_color
+  - i_z_color
+  - bp_rp
+
+HYPERPARAMETERS:
+  n_estimators: 300
+  max_depth: 20
+  min_samples_leaf: 4
+  min_samples_split: 5
+  random_state: 42
+
+PERFORMANCE METRICS:
+  Training MAE:  668.8 K
+  Training RMSE: 1022.7 K
+  Training R²:   0.425
+
+  Test MAE:  795.0 K
+  Test RMSE: 1211.7 K
+  Test R²:   0.202
+
+ACCURACY:
+  Within 5%:  19.3%
+  Within 10%: 40.4%
+  Within 20%: 74.2%
+
+FEATURE IMPORTANCE:
+  g_r_color      : 0.2381
+  r_i_color      : 0.1520
+  i_z_color      : 0.1511
+  bp_rp          : 0.4589
+
+Training time: 266.9 seconds

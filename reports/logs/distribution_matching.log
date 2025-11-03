@@ -1,0 +1,121 @@
+2025-10-21 13:47:43 - INFO - Logging to: /Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/reports/logs/distribution_matching.log
+2025-10-21 13:47:43 - INFO - ======================================================================
+2025-10-21 13:47:43 - INFO - Matching features: ['g_r_color', 'r_i_color', 'i_z_color', 'bp_rp']
+2025-10-21 13:47:43 - INFO - Loading datasets...
+2025-10-21 13:47:43 - INFO - Training path: /Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/data/processed/eb_unified_features_engineered_train.parquet
+2025-10-21 13:47:43 - INFO - Prediction path: /Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/data/processed/eb_unified_features_engineered_predict.parquet
+2025-10-21 13:47:43 - INFO - Training set loaded in 0.61s: 701,644 objects
+2025-10-21 13:47:44 - INFO - Prediction set loaded in 0.39s: 401,111 objects
+2025-10-21 13:47:44 - INFO - ======================================================================
+2025-10-21 13:47:44 - INFO - DISTRIBUTION COMPARISON
+2025-10-21 13:47:44 - INFO - ======================================================================
+2025-10-21 13:47:44 - INFO - 
+g_r_color:
+2025-10-21 13:47:44 - INFO - --------------------------------------------------
+2025-10-21 13:47:44 - INFO -   Training:   n=701,644, mean=0.754, std=0.364, median=0.725
+2025-10-21 13:47:44 - INFO -   Prediction: n=401,111, mean=1.036, std=0.428, median=0.997
+2025-10-21 13:47:44 - INFO -   Difference: mean=+0.282, std=+0.064
+2025-10-21 13:47:44 - INFO -   KS test: statistic=0.2857, p-value=0.0000e+00
+2025-10-21 13:47:44 - INFO -   ⚠️  Distributions are SIGNIFICANTLY DIFFERENT (p < 0.001)
+2025-10-21 13:47:44 - INFO - 
+r_i_color:
+2025-10-21 13:47:44 - INFO - --------------------------------------------------
+2025-10-21 13:47:44 - INFO -   Training:   n=701,644, mean=0.380, std=0.257, median=0.353
+2025-10-21 13:47:44 - INFO -   Prediction: n=401,111, mean=0.554, std=0.301, median=0.520
+2025-10-21 13:47:44 - INFO -   Difference: mean=+0.174, std=+0.045
+2025-10-21 13:47:44 - INFO -   KS test: statistic=0.2606, p-value=0.0000e+00
+2025-10-21 13:47:44 - INFO -   ⚠️  Distributions are SIGNIFICANTLY DIFFERENT (p < 0.001)
+2025-10-21 13:47:44 - INFO - 
+i_z_color:
+2025-10-21 13:47:44 - INFO - --------------------------------------------------
+2025-10-21 13:47:44 - INFO -   Training:   n=701,644, mean=0.213, std=0.180, median=0.198
+2025-10-21 13:47:44 - INFO -   Prediction: n=401,111, mean=0.319, std=0.212, median=0.303
+2025-10-21 13:47:44 - INFO -   Difference: mean=+0.106, std=+0.032
+2025-10-21 13:47:44 - INFO -   KS test: statistic=0.2320, p-value=0.0000e+00
+2025-10-21 13:47:44 - INFO -   ⚠️  Distributions are SIGNIFICANTLY DIFFERENT (p < 0.001)
+2025-10-21 13:47:44 - INFO - 
+bp_rp:
+2025-10-21 13:47:44 - INFO - --------------------------------------------------
+2025-10-21 13:47:44 - INFO -   Training:   n=701,644, mean=1.359, std=0.459, median=1.308
+2025-10-21 13:47:44 - INFO -   Prediction: n=401,111, mean=1.689, std=0.491, median=1.644
+2025-10-21 13:47:44 - INFO -   Difference: mean=+0.330, std=+0.032
+2025-10-21 13:47:44 - INFO -   KS test: statistic=0.2926, p-value=0.0000e+00
+2025-10-21 13:47:44 - INFO -   ⚠️  Distributions are SIGNIFICANTLY DIFFERENT (p < 0.001)
+2025-10-21 13:47:44 - INFO - 
+======================================================================
+2025-10-21 13:47:44 - INFO - CALCULATING DENSITY RATIO WEIGHTS
+2025-10-21 13:47:44 - INFO - ======================================================================
+2025-10-21 13:47:44 - INFO - Training features shape: (701644, 4)
+2025-10-21 13:47:44 - INFO - Prediction features shape: (401111, 4)
+2025-10-21 13:47:44 - INFO - 
+Subsampling 50,000 samples for KDE fitting (speed optimization)...
+2025-10-21 13:47:44 - INFO - 
+Fitting KDE on training set (50,000 samples)...
+2025-10-21 13:47:44 - INFO -   Completed in 0.02s
+2025-10-21 13:47:44 - INFO - Fitting KDE on prediction set (50,000 samples)...
+2025-10-21 13:47:44 - INFO -   Completed in 0.02s
+2025-10-21 13:47:44 - INFO - 
+Calculating density ratios for 701,644 training samples...
+2025-10-21 13:47:44 - INFO - Using parallel processing for KDE scoring...
+2025-10-21 13:47:44 - INFO - Scoring training density...
+2025-10-21 13:47:44 - INFO -   Processing 701,644 samples in 71 chunks using 16 CPUs...
+2025-10-21 13:55:08 - INFO -   Training density calculated in 443.73s
+2025-10-21 13:55:08 - INFO - Scoring prediction density...
+2025-10-21 13:55:08 - INFO -   Processing 701,644 samples in 71 chunks using 16 CPUs...
+2025-10-21 14:04:06 - INFO -   Prediction density calculated in 537.89s
+2025-10-21 14:04:06 - INFO - 
+Weight statistics:
+2025-10-21 14:04:06 - INFO -   Min weight: 0.011
+2025-10-21 14:04:06 - INFO -   Max weight: 114.453
+2025-10-21 14:04:06 - INFO -   Mean weight: 1.000
+2025-10-21 14:04:06 - INFO -   Median weight: 0.829
+2025-10-21 14:04:06 - INFO -   Std weight: 0.915
+2025-10-21 14:04:08 - INFO - 
+✓ Saved weight distribution plot
+2025-10-21 14:04:08 - INFO - 
+======================================================================
+2025-10-21 14:04:08 - INFO - CREATING WEIGHTED TRAINING SET
+2025-10-21 14:04:08 - INFO - ======================================================================
+2025-10-21 14:04:12 - INFO - ✓ Saved weighted training set: /Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/data/processed/eb_unified_features_engineered_train_weighted.parquet
+2025-10-21 14:04:12 - INFO -   Total samples: 701,644
+2025-10-21 14:04:12 - INFO -   Effective sample size: 381983
+2025-10-21 14:04:12 - INFO - 
+======================================================================
+2025-10-21 14:04:12 - INFO - VALIDATING REWEIGHTED DISTRIBUTION MATCH
+2025-10-21 14:04:12 - INFO - ======================================================================
+2025-10-21 14:04:12 - INFO - 
+g_r_color:
+2025-10-21 14:04:12 - INFO - --------------------------------------------------
+2025-10-21 14:04:12 - INFO -   Corrected train: mean=0.989, std=0.406
+2025-10-21 14:04:12 - INFO -   Prediction:      mean=1.036, std=0.428
+2025-10-21 14:04:12 - INFO -   Difference:      mean=+0.047, std=+0.022
+2025-10-21 14:04:12 - INFO -   KS test: statistic=0.2857, p-value=0.0000e+00
+2025-10-21 14:04:12 - INFO -   ⚠️  Some difference remains (p < 0.05)
+2025-10-21 14:04:12 - INFO - 
+r_i_color:
+2025-10-21 14:04:12 - INFO - --------------------------------------------------
+2025-10-21 14:04:13 - INFO -   Corrected train: mean=0.530, std=0.291
+2025-10-21 14:04:13 - INFO -   Prediction:      mean=0.554, std=0.301
+2025-10-21 14:04:13 - INFO -   Difference:      mean=+0.024, std=+0.010
+2025-10-21 14:04:13 - INFO -   KS test: statistic=0.2606, p-value=0.0000e+00
+2025-10-21 14:04:13 - INFO -   ⚠️  Some difference remains (p < 0.05)
+2025-10-21 14:04:13 - INFO - 
+i_z_color:
+2025-10-21 14:04:13 - INFO - --------------------------------------------------
+2025-10-21 14:04:13 - INFO -   Corrected train: mean=0.303, std=0.198
+2025-10-21 14:04:13 - INFO -   Prediction:      mean=0.319, std=0.212
+2025-10-21 14:04:13 - INFO -   Difference:      mean=+0.016, std=+0.014
+2025-10-21 14:04:13 - INFO -   KS test: statistic=0.2320, p-value=0.0000e+00
+2025-10-21 14:04:13 - INFO -   ⚠️  Some difference remains (p < 0.05)
+2025-10-21 14:04:13 - INFO - 
+bp_rp:
+2025-10-21 14:04:13 - INFO - --------------------------------------------------
+2025-10-21 14:04:13 - INFO -   Corrected train: mean=1.656, std=0.497
+2025-10-21 14:04:13 - INFO -   Prediction:      mean=1.689, std=0.491
+2025-10-21 14:04:13 - INFO -   Difference:      mean=+0.033, std=-0.007
+2025-10-21 14:04:14 - INFO -   KS test: statistic=0.2926, p-value=0.0000e+00
+2025-10-21 14:04:14 - INFO -   ⚠️  Some difference remains (p < 0.05)
+2025-10-21 14:04:14 - INFO - 
+======================================================================
+2025-10-21 14:04:14 - INFO - DISTRIBUTION MATCHING COMPLETE
+2025-10-21 14:04:14 - INFO - ======================================================================

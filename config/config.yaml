@@ -42,6 +42,11 @@ datasets:
   eb_full_catalog_temps: eb_full_catalog_temperatures.parquet
   stars_types_with_predictions: stars_types_with_predictions.parquet
 
+  # Unified features datasets
+  eb_unified_features_engineered: eb_unified_features_engineered.parquet
+  eb_unified_features_engineered_train: eb_unified_features_engineered_train.parquet
+  eb_unified_features_engineered_predict: eb_unified_features_engineered_predict.parquet
+
 # Data processing parameters
 processing:
   # Missing value indicator
