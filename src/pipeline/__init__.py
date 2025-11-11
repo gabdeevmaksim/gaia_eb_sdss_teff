@@ -8,10 +8,16 @@ and machine learning workflows.
 from .base import Pipeline, PipelineStep
 from .data_pipeline import DataProcessingPipeline
 from .ml_pipeline import MLTrainingPipeline
+from .configurable_ml_pipeline import ConfigurableMLPipeline
+from .prediction_pipeline import PredictionPipeline
+from .validation_pipeline import ValidationPipeline
 
 __all__ = [
     'Pipeline',
     'PipelineStep',
     'DataProcessingPipeline',
-    'MLTrainingPipeline'
+    'MLTrainingPipeline',
+    'ConfigurableMLPipeline',
+    'PredictionPipeline',
+    'ValidationPipeline'
 ]

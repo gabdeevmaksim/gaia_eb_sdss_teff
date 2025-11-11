@@ -289,7 +289,7 @@ pip install -r requirements.txt
 
 ## Pipelines
 
-**Automated Workflows** - See `docs/PIPELINES.md` for complete guide
+**Automated Workflows** - See `docs/PIPELINES.md` and `docs/CONFIGURABLE_PIPELINE.md`
 
 ```bash
 # Run complete pipeline (data processing + ML training)
@@ -298,21 +298,38 @@ python pipeline.py --all
 # Run data processing only
 python pipeline.py --data
 
-# Run ML training only
-python pipeline.py --ml
+# ML training with model config (RECOMMENDED)
+python pipeline.py --ml --ml-config config/models/gaia_2mass_ir.yaml
+python pipeline.py --ml --ml-config config/models/panstarrs_unified.yaml
 
-# Custom model parameters
+# Prediction with trained model
+python pipeline.py --predict --pred-config config/prediction/predict_gaia_2mass_ir.yaml
+
+# Validation (generate plots + metrics)
+python pipeline.py --validate --val-config config/validation/validate_gaia_2mass_ir.yaml
+
+# Legacy: Custom model parameters (use --ml-config instead)
 python pipeline.py --ml --n-estimators 500 --max-depth 25
 
 # Dry run (see what would be executed)
-python pipeline.py --all --dry-run
+python pipeline.py --ml --ml-config config/models/gaia_2mass_ir.yaml --dry-run
 ```
 
 **Pipeline Architecture**:
 - `src/pipeline/base.py` - Base pipeline classes
 - `src/pipeline/data_pipeline.py` - Data processing workflow
-- `src/pipeline/ml_pipeline.py` - ML training workflow
+- `src/pipeline/ml_pipeline.py` - ML training workflow (legacy)
+- `src/pipeline/configurable_ml_pipeline.py` - Configurable ML training (RECOMMENDED)
+- `src/pipeline/prediction_pipeline.py` - Prediction workflow
+- `src/pipeline/validation_pipeline.py` - Validation workflow
 - `pipeline.py` - Master orchestrator (CLI)
+
+**Model Configurations** (in `config/models/`):
+- `gaia_2mass_ir.yaml` - Gaia + 2MASS infrared features
+- `gaia_g_bprp_engineered.yaml` - Gaia G+BP-RP engineered features
+- `panstarrs_basic.yaml` - PanSTARRS basic model
+- `panstarrs_unified.yaml` - Color-only unified features
+- `weighted_basic_colors.yaml` - Distribution matching weights
 
 ## Core Scripts and Usage
 
@@ -662,7 +679,13 @@ python scripts/create_ensemble_panstarrs_unified_validation_plots.py  # Ensemble
 
 **Plot standards**: DPI 300, hexbin density plots, consistent color schemes. See `src/visualization/validation_plots.py` for implementation.
 
-**Model comparison**: See `docs/ALL_MODELS_COMPARISON.md` for detailed performance metrics, feature importance, and recommendations.
+**Generalized Validation Plots**: The validation plotting functions now support any target variable (not just Teff):
+- Dynamic axis limits based on data
+- Configurable units (K, dex, etc.)
+- Target-specific labels (Teff, logg, [Fe/H])
+- Works for multi-output models (Teff, logg, [Fe/H] predictions)
+
+**Model comparison**: See `docs/ALL_MODELS_COMPARISON.md` and `docs/GAIA_TEFF_MODELS_COMPARISON.md` for detailed performance metrics, feature importance, and recommendations.
 
 ## Directory Structure
 
@@ -693,6 +716,13 @@ python scripts/create_ensemble_panstarrs_unified_validation_plots.py  # Ensemble
 │   ├── convert_parquet_to_csv.py          # Convert Parquet to CSV/DAT (standalone)
 │   ├── memory_monitor.py                  # System memory monitoring for training
 │   ├── create_ensemble_panstarrs_unified.py      # Create ensemble model (PanSTARRS + Unified)
+│   ├── analyze_photometry_coverage.py         # Analyze photometry coverage across catalogs
+│   ├── create_unified_photometry_dataset.py   # Create unified photometry dataset
+│   ├── crossmatch_panstarrs_to_gaia.py        # Cross-match PanSTARRS to Gaia sources
+│   ├── train_gaia_colors_teff.py              # Train Teff model with Gaia colors
+│   ├── train_gaia_multioutput_model.py        # Train multi-output model (Teff, logg, feh)
+│   ├── validate_gaia_multioutput.py           # Validate multi-output models
+│   ├── compare_all_models.py                  # Compare all Teff models
 │   ├── create_panstarrs_validation_plots.py      # Pan-STARRS model validation plots
 │   ├── create_combined_validation_plots.py       # Combined model validation plots
 │   ├── create_gaia_2mass_validation_plots.py     # Gaia+2MASS Basic validation plots
@@ -737,16 +767,26 @@ python scripts/create_ensemble_panstarrs_unified_validation_plots.py  # Ensemble
 │   ├── interim/               # Intermediate processing
 │   └── cache/                 # Computation cache
 ├── config/                     # Configuration files
+│   ├── models/                # Model training configurations
+│   ├── prediction/            # Prediction configurations
+│   └── validation/            # Validation configurations
 ├── docs/                       # Documentation
 │   ├── AI_TEMPERATURE_PREDICTION_RESEARCH.md  # ML temperature prediction research notes
+│   ├── ALL_MODELS_COMPARISON.md       # Comparison of all Teff models
+│   ├── CONFIGURABLE_PIPELINE.md       # Configurable pipeline guide
 │   ├── CONFIGURATION.md               # Configuration system guide
-│   ├── FEATURE_PREPARATION_FOR_PREDICTION.md  # Feature engineering guide for predictions
+│   ├── EB_UNIFIED_PHOTOMETRY_WITH_ALL_PREDICTIONS_SCHEMA.md  # Unified photometry schema
+│   ├── FEATURE_PREPARATION_FOR_PREDICTION.md  # Feature engineering guide
+│   ├── GAIA_TEFF_MODELS_COMPARISON.md # Gaia Teff models comparison
 │   ├── MIGRATION_GUIDE.md             # Migration guide for configuration system
 │   ├── NOTEBOOK_CONVERSION.md         # Notebook best practices
 │   ├── NOTEBOOK_GUIDE.md              # Notebook development guide
 │   ├── NOTEBOOK_UTILITIES.md          # Notebook utilities and modules guide
 │   ├── PIPELINES.md                   # Pipeline documentation
-│   └── SCRIPTS_MIGRATION.md           # Scripts migration status and notes
+│   ├── REPOSITORY_RESTRUCTURING_PLAN.md  # Repository restructuring plan
+│   ├── SCRIPTS_MIGRATION.md           # Scripts migration status
+│   ├── UNIFIED_FEATURES_WORKFLOW.md   # Unified features workflow
+│   └── UNIFIED_PHOTOMETRY_SCHEMA.md   # Unified photometry schema
 ├── reports/                    # Generated reports
 │   ├── figures/               # Generated plots
 │   └── presentations/         # Presentation materials

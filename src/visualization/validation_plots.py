@@ -53,7 +53,8 @@ def plot_test_scatter(
     r2: float,
     model_id: str,
     subdir: str,
-    model_name: str = "Model"
+    model_name: str = "Model",
+    target_info: dict = None
 ):
     """
     Test scatter: Predicted vs. Ground Truth with 1:1 and ±10% lines.
@@ -61,7 +62,7 @@ def plot_test_scatter(
     Parameters
     ----------
     test_pred : pd.DataFrame
-        Test predictions with columns 'true_temperature', 'predicted_temperature'
+        Test predictions with columns 'true_value', 'predicted_value'
     mae, rmse, r2 : float
         Performance metrics
     model_id : str
@@ -70,32 +71,54 @@ def plot_test_scatter(
         Subdirectory for saving
     model_name : str
         Name for plot title
+    target_info : dict
+        Target variable information (name, unit, short)
     """
     print("\n1. Creating test scatter plot...")
+
+    # Default target info if not provided
+    if target_info is None:
+        target_info = {'name': 'Temperature', 'unit': 'K', 'short': 'Teff'}
+
+    # Get column names (support both old and new naming)
+    if 'true_value' in test_pred.columns:
+        true_col, pred_col = 'true_value', 'predicted_value'
+    else:
+        true_col, pred_col = 'true_temperature', 'predicted_temperature'
 
     fig, ax = plt.subplots(figsize=(10, 10))
 
     # Hexbin plot for density
-    hb = ax.hexbin(test_pred['true_temperature'], test_pred['predicted_temperature'],
+    hb = ax.hexbin(test_pred[true_col], test_pred[pred_col],
                    gridsize=50, cmap='YlOrRd', mincnt=1, bins='log')
 
-    # 1:1 line
-    ax.plot([3000, 35000], [3000, 35000], 'k--', lw=2, label='1:1 line')
+    # 1:1 line - calculate limits from data
+    data_min = min(test_pred[true_col].min(), test_pred[pred_col].min())
+    data_max = max(test_pred[true_col].max(), test_pred[pred_col].max())
+    ax.plot([data_min, data_max], [data_min, data_max], 'k--', lw=2, label='1:1 line')
 
     # ±10% lines
-    x = np.array([3000, 35000])
+    x = np.array([data_min, data_max])
     ax.plot(x, x * 1.1, 'k:', lw=1, alpha=0.5, label='±10%')
     ax.plot(x, x * 0.9, 'k:', lw=1, alpha=0.5)
 
-    ax.set_xlabel('True Teff (K)', fontsize=12)
-    ax.set_ylabel('Predicted Teff (K)', fontsize=12)
-    ax.set_title(f'Test Set: Predicted vs. Ground Truth ({model_name})\n'
-                 f'MAE = {mae:.0f} K, RMSE = {rmse:.0f} K, R² = {r2:.3f}',
+    # Labels with dynamic units
+    unit_str = f" ({target_info['unit']})" if target_info['unit'] else ""
+    ax.set_xlabel(f"True {target_info['short']}{unit_str}", fontsize=12)
+    ax.set_ylabel(f"Predicted {target_info['short']}{unit_str}", fontsize=12)
+
+    # Format metrics with appropriate precision
+    if target_info['unit'] == 'K':
+        metrics_str = f'MAE = {mae:.0f} {target_info["unit"]}, RMSE = {rmse:.0f} {target_info["unit"]}, R² = {r2:.3f}'
+    else:
+        metrics_str = f'MAE = {mae:.3f} {target_info["unit"]}, RMSE = {rmse:.3f} {target_info["unit"]}, R² = {r2:.3f}'
+
+    ax.set_title(f'Test Set: Predicted vs. Ground Truth ({model_name})\n{metrics_str}',
                  fontsize=14)
     ax.legend(fontsize=10)
     ax.grid(True, alpha=0.3)
-    ax.set_xlim(3000, 35000)
-    ax.set_ylim(3000, 35000)
+    ax.set_xlim(data_min, data_max)
+    ax.set_ylim(data_min, data_max)
 
     plt.colorbar(hb, ax=ax, label='log10(counts)')
     plt.tight_layout()
@@ -106,7 +129,8 @@ def plot_test_scatter(
 def plot_residuals(
     test_pred: pd.DataFrame,
     model_id: str,
-    subdir: str
+    subdir: str,
+    target_info: dict = None
 ):
     """
     Residual analysis with 2 subplots.
@@ -114,24 +138,41 @@ def plot_residuals(
     Parameters
     ----------
     test_pred : pd.DataFrame
-        Test predictions with columns 'true_temperature', 'residual'
+        Test predictions with columns 'true_value', 'residual'
     model_id : str
         Model identifier for filename
     subdir : str
         Subdirectory for saving
+    target_info : dict
+        Target variable information (name, unit, short)
     """
     print("\n2. Creating residual plots...")
 
+    # Default target info if not provided
+    if target_info is None:
+        target_info = {'name': 'Temperature', 'unit': 'K', 'short': 'Teff'}
+
+    # Get column names (support both old and new naming)
+    if 'true_value' in test_pred.columns:
+        true_col = 'true_value'
+    else:
+        true_col = 'true_temperature'
+
     fig, axes = plt.subplots(2, 1, figsize=(12, 10))
 
-    # Residuals vs. ground truth
+    # Residuals vs. ground truth - dynamic vmin/vmax based on data
+    residual_std = test_pred['residual'].std()
+    vmin, vmax = -3 * residual_std, 3 * residual_std
+
     ax = axes[0]
-    hb = ax.hexbin(test_pred['true_temperature'], test_pred['residual'],
-                   gridsize=50, cmap='RdBu_r', mincnt=1, vmin=-2000, vmax=2000)
+    hb = ax.hexbin(test_pred[true_col], test_pred['residual'],
+                   gridsize=50, cmap='RdBu_r', mincnt=1, vmin=vmin, vmax=vmax)
     ax.axhline(0, color='k', linestyle='--', lw=2)
-    ax.set_xlabel('True Teff (K)', fontsize=12)
-    ax.set_ylabel('Residual (Predicted - True) [K]', fontsize=12)
-    ax.set_title('Residuals vs. Ground Truth Temperature', fontsize=13)
+
+    unit_str = f" ({target_info['unit']})" if target_info['unit'] else ""
+    ax.set_xlabel(f"True {target_info['short']}{unit_str}", fontsize=12)
+    ax.set_ylabel(f"Residual (Predicted - True) [{target_info['unit']}]", fontsize=12)
+    ax.set_title(f"Residuals vs. Ground Truth {target_info['name']}", fontsize=13)
     ax.grid(True, alpha=0.3)
     plt.colorbar(hb, ax=ax, label='counts')
 
@@ -139,9 +180,15 @@ def plot_residuals(
     ax = axes[1]
     ax.hist(test_pred['residual'], bins=100, edgecolor='black', alpha=0.7)
     ax.axvline(0, color='red', linestyle='--', lw=2, label='Zero residual')
-    ax.axvline(test_pred['residual'].median(), color='blue', linestyle='-', lw=2,
-               label=f"Median = {test_pred['residual'].median():.1f} K")
-    ax.set_xlabel('Residual (K)', fontsize=12)
+
+    median_resid = test_pred['residual'].median()
+    if target_info['unit'] == 'K':
+        label_str = f"Median = {median_resid:.1f} {target_info['unit']}"
+    else:
+        label_str = f"Median = {median_resid:.3f} {target_info['unit']}"
+
+    ax.axvline(median_resid, color='blue', linestyle='-', lw=2, label=label_str)
+    ax.set_xlabel(f"Residual ({target_info['unit']})", fontsize=12)
     ax.set_ylabel('Count', fontsize=12)
     ax.set_title('Distribution of Residuals', fontsize=13)
     ax.legend(fontsize=10)
@@ -156,40 +203,48 @@ def plot_performance_by_temp(
     test_pred: pd.DataFrame,
     bin_stats_df: pd.DataFrame,
     model_id: str,
-    subdir: str
+    subdir: str,
+    target_info: dict = None
 ):
     """
-    Performance by temperature range (4 subplots).
+    Performance by value range (4 subplots).
 
     Parameters
     ----------
     test_pred : pd.DataFrame
         Test predictions
     bin_stats_df : pd.DataFrame
-        Statistics by temperature bin with columns:
+        Statistics by value bin with columns:
         'bin', 'mae', 'rmse', 'mean_pct', 'within_10'
     model_id : str
         Model identifier for filename
     subdir : str
         Subdirectory for saving
+    target_info : dict
+        Target variable information (name, unit, short)
     """
-    print("\n3. Creating performance by temperature plots...")
+    print("\n3. Creating performance by value range plots...")
+
+    # Default target info if not provided
+    if target_info is None:
+        target_info = {'name': 'Temperature', 'unit': 'K', 'short': 'Teff'}
 
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+    unit = target_info['unit']
 
-    # MAE by temperature bin
+    # MAE by value bin
     ax = axes[0, 0]
     ax.bar(bin_stats_df['bin'], bin_stats_df['mae'], color='steelblue', edgecolor='black')
-    ax.set_ylabel('MAE (K)', fontsize=11)
-    ax.set_title('Mean Absolute Error by Temperature Range', fontsize=12)
+    ax.set_ylabel(f'MAE ({unit})', fontsize=11)
+    ax.set_title(f'Mean Absolute Error by {target_info["name"]} Range', fontsize=12)
     ax.tick_params(axis='x', rotation=45)
     ax.grid(True, alpha=0.3, axis='y')
 
-    # RMSE by temperature bin
+    # RMSE by value bin
     ax = axes[0, 1]
     ax.bar(bin_stats_df['bin'], bin_stats_df['rmse'], color='coral', edgecolor='black')
-    ax.set_ylabel('RMSE (K)', fontsize=11)
-    ax.set_title('Root Mean Square Error by Temperature Range', fontsize=12)
+    ax.set_ylabel(f'RMSE ({unit})', fontsize=11)
+    ax.set_title(f'Root Mean Square Error by {target_info["name"]} Range', fontsize=12)
     ax.tick_params(axis='x', rotation=45)
     ax.grid(True, alpha=0.3, axis='y')
 
@@ -197,7 +252,7 @@ def plot_performance_by_temp(
     ax = axes[1, 0]
     ax.bar(bin_stats_df['bin'], bin_stats_df['mean_pct'], color='seagreen', edgecolor='black')
     ax.set_ylabel('Mean Percent Error (%)', fontsize=11)
-    ax.set_title('Mean Percent Error by Temperature Range', fontsize=12)
+    ax.set_title(f'Mean Percent Error by {target_info["name"]} Range', fontsize=12)
     ax.tick_params(axis='x', rotation=45)
     ax.grid(True, alpha=0.3, axis='y')
 
@@ -205,7 +260,7 @@ def plot_performance_by_temp(
     ax = axes[1, 1]
     ax.bar(bin_stats_df['bin'], bin_stats_df['within_10'], color='mediumpurple', edgecolor='black')
     ax.set_ylabel('Objects Within 10% (%)', fontsize=11)
-    ax.set_title('Accuracy (Within 10%) by Temperature Range', fontsize=12)
+    ax.set_title(f'Accuracy (Within 10%) by {target_info["name"]} Range', fontsize=12)
     ax.tick_params(axis='x', rotation=45)
     ax.grid(True, alpha=0.3, axis='y')
 
@@ -221,45 +276,58 @@ def plot_temp_distributions(
     subdir: str,
     train_col: str = 'teff_gspphot',
     pred_col: str = 'teff_predicted',
-    model_name: str = "Model"
+    model_name: str = "Model",
+    target_info: dict = None
 ):
     """
-    Temperature distribution comparison (2 subplots).
+    Value distribution comparison (2 subplots).
 
     Parameters
     ----------
     train_data : pd.DataFrame
-        Training data with temperature column
+        Training data with value column
     predictions : pd.DataFrame
-        Predictions with temperature column
+        Predictions with value column
     model_id : str
         Model identifier for filename
     subdir : str
         Subdirectory for saving
     train_col : str
-        Column name for training temperatures
+        Column name for training values
     pred_col : str
-        Column name for predicted temperatures
+        Column name for predicted values
     model_name : str
         Name for plot title
+    target_info : dict
+        Target variable information (name, unit, short)
     """
-    print("\n4. Creating temperature distribution plots...")
+    print("\n4. Creating value distribution plots...")
+
+    # Default target info if not provided
+    if target_info is None:
+        target_info = {'name': 'Temperature', 'unit': 'K', 'short': 'Teff'}
 
     fig, axes = plt.subplots(2, 1, figsize=(12, 10))
 
+    # Calculate data range for xlim (dynamic)
+    data_min = min(train_data[train_col].min(), predictions[pred_col].min())
+    data_max = max(train_data[train_col].max(), predictions[pred_col].max())
+
     # Histogram
     ax = axes[0]
-    ax.hist(train_data[train_col], bins=100, alpha=0.6, label='Training (with Gaia Teff)',
+    ax.hist(train_data[train_col], bins=100, alpha=0.6, label=f'Training (with Gaia {target_info["short"]})',
             color='blue', edgecolor='black', density=True)
-    ax.hist(predictions[pred_col], bins=100, alpha=0.6, label='Predictions (no Gaia Teff)',
+    ax.hist(predictions[pred_col], bins=100, alpha=0.6, label=f'Predictions (no Gaia {target_info["short"]})',
             color='orange', edgecolor='black', density=True)
-    ax.set_xlabel('Temperature (K)', fontsize=12)
+
+    unit_str = f" ({target_info['unit']})" if target_info['unit'] else ""
+    ax.set_xlabel(f'{target_info["name"]}{unit_str}', fontsize=12)
     ax.set_ylabel('Normalized Frequency', fontsize=12)
-    ax.set_title(f'Temperature Distribution: Training vs. Predictions ({model_name})',
+    ax.set_title(f'{target_info["name"]} Distribution: Training vs. Predictions ({model_name})',
                  fontsize=13)
     ax.legend(fontsize=11)
     ax.grid(True, alpha=0.3)
-    ax.set_xlim(3000, 20000)
+    ax.set_xlim(data_min, data_max)
 
     # Add vertical lines for means
     ax.axvline(train_data[train_col].mean(), color='blue', linestyle='--', lw=2)
@@ -270,15 +338,15 @@ def plot_temp_distributions(
     sorted_train = np.sort(train_data[train_col])
     sorted_pred = np.sort(predictions[pred_col])
     ax.plot(sorted_train, np.linspace(0, 1, len(sorted_train)),
-            label='Training (with Gaia Teff)', color='blue', lw=2)
+            label=f'Training (with Gaia {target_info["short"]})', color='blue', lw=2)
     ax.plot(sorted_pred, np.linspace(0, 1, len(sorted_pred)),
-            label='Predictions (no Gaia Teff)', color='orange', lw=2)
-    ax.set_xlabel('Temperature (K)', fontsize=12)
+            label=f'Predictions (no Gaia {target_info["short"]})', color='orange', lw=2)
+    ax.set_xlabel(f'{target_info["name"]}{unit_str}', fontsize=12)
     ax.set_ylabel('Cumulative Fraction', fontsize=12)
     ax.set_title('Cumulative Distribution Function', fontsize=13)
     ax.legend(fontsize=11)
     ax.grid(True, alpha=0.3)
-    ax.set_xlim(3000, 20000)
+    ax.set_xlim(data_min, data_max)
 
     plt.tight_layout()
     save_figure(fig, f'{model_id}_temp_distributions.png', subdir)
@@ -357,10 +425,11 @@ def plot_color_temp_relations(
     subdir: str,
     train_temp_col: str = 'teff_gspphot',
     pred_temp_col: str = 'teff_predicted',
-    sample_size: int = 10000
+    sample_size: int = 10000,
+    target_info: dict = None
 ):
     """
-    Color-Temperature relation diagrams (1x3 grid): Training, Predictions, Overlay.
+    Color-Parameter relation diagrams (1x3 grid): Training, Predictions, Overlay.
 
     Parameters
     ----------
@@ -377,13 +446,19 @@ def plot_color_temp_relations(
     subdir : str
         Subdirectory for saving
     train_temp_col : str
-        Temperature column in training data
+        Parameter column in training data
     pred_temp_col : str
-        Temperature column in predictions
+        Parameter column in predictions
     sample_size : int
         Number of points to sample for visualization
+    target_info : dict
+        Target variable information (name, unit, short)
     """
-    print("\n6. Creating color-temperature relation plots...")
+    # Default target info if not provided
+    if target_info is None:
+        target_info = {'name': 'Temperature', 'unit': 'K', 'short': 'Teff'}
+
+    print(f"\n6. Creating color-{target_info['short']} relation plots...")
 
     # Sample for visualization
     train_sample_size = min(sample_size, len(train_data))
@@ -394,40 +469,48 @@ def plot_color_temp_relations(
 
     fig, axes = plt.subplots(1, 3, figsize=(18, 6))
 
+    # Calculate data range dynamically
+    train_min = train_sample[train_temp_col].min()
+    train_max = train_sample[train_temp_col].max()
+    pred_min = predictions[pred_temp_col].min()
+    pred_max = predictions[pred_temp_col].max()
+
     # Panel 1: Training Set
     ax = axes[0]
     valid_mask_train = (train_sample[color_col] > -0.5) & (train_sample[color_col] < 3) & \
-                       (train_sample[train_temp_col] > 2000) & (train_sample[train_temp_col] < 12000)
+                       (train_sample[train_temp_col] > train_min) & (train_sample[train_temp_col] < train_max)
     if valid_mask_train.sum() > 0:
         hb = ax.hexbin(train_sample.loc[valid_mask_train, color_col],
                        train_sample.loc[valid_mask_train, train_temp_col],
                        gridsize=50, cmap='Blues', mincnt=1, bins='log')
         plt.colorbar(hb, ax=ax, label='log10(counts)')
     ax.set_xlabel(f'{color_label} color', fontsize=12)
-    ax.set_ylabel('Teff_Gaia [K]', fontsize=12)
+    ax.set_ylabel(f'{target_info["short"]}_Gaia [{target_info["unit"]}]', fontsize=12)
     ax.set_title(f'Training Set (n={valid_mask_train.sum():,})', fontsize=13)
-    ax.set_ylim(12000, 2000)
+    ax.set_ylim(train_max, train_min)
     ax.invert_yaxis()
     ax.grid(True, alpha=0.3)
 
     # Panel 2: Prediction Set
     ax = axes[1]
     valid_mask_pred = (pred_sample[color_col] > -0.5) & (pred_sample[color_col] < 3) & \
-                      (pred_sample[pred_temp_col] > 2000) & (pred_sample[pred_temp_col] < 12000)
+                      (pred_sample[pred_temp_col] > pred_min) & (pred_sample[pred_temp_col] < pred_max)
     if valid_mask_pred.sum() > 0:
         hb = ax.hexbin(pred_sample.loc[valid_mask_pred, color_col],
                        pred_sample.loc[valid_mask_pred, pred_temp_col],
                        gridsize=50, cmap='Oranges', mincnt=1, bins='log')
         plt.colorbar(hb, ax=ax, label='log10(counts)')
     ax.set_xlabel(f'{color_label} color', fontsize=12)
-    ax.set_ylabel('Teff_predicted [K]', fontsize=12)
+    ax.set_ylabel(f'{target_info["short"]}_predicted [{target_info["unit"]}]', fontsize=12)
     ax.set_title(f'Predictions (n={valid_mask_pred.sum():,})', fontsize=13)
-    ax.set_ylim(12000, 2000)
+    ax.set_ylim(pred_max, pred_min)
     ax.invert_yaxis()
     ax.grid(True, alpha=0.3)
 
     # Panel 3: Overlay comparison
     ax = axes[2]
+    data_min = min(train_min, pred_min)
+    data_max = max(train_max, pred_max)
     if valid_mask_train.sum() > 0 and valid_mask_pred.sum() > 0:
         ax.scatter(train_sample.loc[valid_mask_train, color_col],
                    train_sample.loc[valid_mask_train, train_temp_col],
@@ -437,9 +520,9 @@ def plot_color_temp_relations(
                    s=1, alpha=0.3, label='Predictions', color='orange')
         ax.legend(fontsize=10, markerscale=5)
     ax.set_xlabel(f'{color_label} color', fontsize=12)
-    ax.set_ylabel('Teff [K]', fontsize=12)
+    ax.set_ylabel(f'{target_info["short"]} [{target_info["unit"]}]', fontsize=12)
     ax.set_title(f'Overlay ({sample_size//1000}k sample each)', fontsize=13)
-    ax.set_ylim(12000, 2000)
+    ax.set_ylim(data_max, data_min)
     ax.invert_yaxis()
     ax.grid(True, alpha=0.3)
 

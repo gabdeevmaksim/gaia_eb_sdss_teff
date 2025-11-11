@@ -39,7 +39,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Import pipelines
-from src.pipeline import DataProcessingPipeline, MLTrainingPipeline
+from src.pipeline import (
+    DataProcessingPipeline,
+    MLTrainingPipeline,
+    ConfigurableMLPipeline,
+    PredictionPipeline,
+    ValidationPipeline
+)
 from src.config import get_config
 
 
@@ -60,7 +66,7 @@ def run_data_pipeline(dry_run=False):
     return context
 
 
-def run_ml_pipeline(n_estimators=None, max_depth=None, dry_run=False):
+def run_ml_pipeline(n_estimators=None, max_depth=None, model_config=None, dry_run=False):
     """Run the ML training pipeline."""
     if dry_run:
         logger.info("DRY RUN: Would execute ML Training Pipeline")
@@ -71,16 +77,76 @@ def run_ml_pipeline(n_estimators=None, max_depth=None, dry_run=False):
         logger.info("    4. Train Model")
         logger.info("    5. Evaluate Performance")
         logger.info("    6. Save Model")
-        if n_estimators:
+        if model_config:
+            logger.info(f"  Model config: {model_config}")
+        elif n_estimators:
             logger.info(f"  Parameters: n_estimators={n_estimators}, max_depth={max_depth}")
         return {}
 
-    pipeline = MLTrainingPipeline(n_estimators=n_estimators, max_depth=max_depth)
-    context = pipeline.run()
+    # Use configurable pipeline if model config provided
+    if model_config:
+        logger.info(f"Using configurable pipeline with config: {model_config}")
+        pipeline = ConfigurableMLPipeline(model_config)
+        context = pipeline.run()
+    else:
+        logger.info("Using legacy pipeline (consider migrating to configurable pipeline)")
+        pipeline = MLTrainingPipeline(n_estimators=n_estimators, max_depth=max_depth)
+        context = pipeline.run()
+
     return context
 
 
-def run_complete_pipeline(n_estimators=None, max_depth=None, dry_run=False):
+def run_prediction_pipeline(pred_config=None, dry_run=False):
+    """Run the prediction pipeline."""
+    if dry_run:
+        logger.info("DRY RUN: Would execute Prediction Pipeline")
+        logger.info("  Steps:")
+        logger.info("    1. Load Prediction Configuration")
+        logger.info("    2. Load Trained Model")
+        logger.info("    3. Load Prediction Data")
+        logger.info("    4. Preprocess Data")
+        logger.info("    5. Engineer Features")
+        logger.info("    6. Make Predictions")
+        logger.info("    7. Save Results")
+        if pred_config:
+            logger.info(f"  Prediction config: {pred_config}")
+        return {}
+
+    if not pred_config:
+        raise ValueError("Prediction config file required (use --pred-config)")
+
+    logger.info(f"Using prediction pipeline with config: {pred_config}")
+    pipeline = PredictionPipeline(pred_config)
+    context = pipeline.run()
+
+    return context
+
+
+def run_validation_pipeline(val_config=None, dry_run=False):
+    """Run the validation pipeline."""
+    if dry_run:
+        logger.info("DRY RUN: Would execute Validation Pipeline")
+        logger.info("  Steps:")
+        logger.info("    1. Load Validation Configuration")
+        logger.info("    2. Load Model + Metadata + Test Predictions")
+        logger.info("    3. Calculate Metrics (MAE, RMSE, R², etc.)")
+        logger.info("    4. Generate Validation Plots")
+        logger.info("    5. Save Validation Report")
+        if val_config:
+            logger.info(f"  Validation config: {val_config}")
+        return {}
+
+    if not val_config:
+        raise ValueError("Validation config file required (use --val-config)")
+
+    logger.info(f"Using validation pipeline with config: {val_config}")
+    pipeline = ValidationPipeline(val_config)
+    context = pipeline.run()
+
+    return context
+
+
+def run_complete_pipeline(n_estimators=None, max_depth=None, model_config=None, dry_run=False):
     """Run complete end-to-end pipeline."""
     logger.info("=" * 70)
     logger.info("COMPLETE PIPELINE: Data Processing + ML Training")
@@ -100,7 +166,12 @@ def run_complete_pipeline(n_estimators=None, max_depth=None, dry_run=False):
     # Run ML training
     logger.info("STAGE 2: ML Training")
     logger.info("-" * 70)
-    ml_context = run_ml_pipeline(n_estimators=n_estimators, max_depth=max_depth, dry_run=dry_run)
+    ml_context = run_ml_pipeline(
+        n_estimators=n_estimators,
+        max_depth=max_depth,
+        model_config=model_config,
+        dry_run=dry_run
+    )
 
     if not dry_run:
         logger.info("")
@@ -110,8 +181,11 @@ def run_complete_pipeline(n_estimators=None, max_depth=None, dry_run=False):
 
         if 'model_id' in ml_context:
             logger.info(f"✓ Model saved: {ml_context['model_id']}")
-            logger.info(f"  MAE: {ml_context['metrics']['mae']:.0f} K")
-            logger.info(f"  R²: {ml_context['metrics']['r2']:.4f}")
+            # Support both old and new metrics format
+            metrics = ml_context.get('metrics') or ml_context.get('test_metrics', {})
+            if metrics:
+                logger.info(f"  MAE: {metrics['mae']:.0f} K")
+                logger.info(f"  R²: {metrics['r2']:.4f}")
 
     return {**data_context, **ml_context}
 
@@ -128,14 +202,25 @@ Examples:
   # Run data processing only
   python pipeline.py --data
 
-  # Run ML training only
-  python pipeline.py --ml
+  # Run ML training with model config (RECOMMENDED)
+  python pipeline.py --ml --ml-config config/models/gaia_2mass_ir.yaml
+  python pipeline.py --ml --ml-config config/models/panstarrs_unified.yaml
 
-  # Custom model parameters
+  # Run prediction with trained model
+  python pipeline.py --predict --pred-config config/prediction/predict_gaia_2mass_ir.yaml
+  python pipeline.py --predict --pred-config config/prediction/predict_panstarrs_unified.yaml
+
+  # Run validation (generate plots + metrics)
+  python pipeline.py --validate --val-config config/validation/validate_gaia_2mass_ir.yaml
+  python pipeline.py --validate --val-config config/validation/validate_latest_model.yaml
+
+  # Legacy: Custom model parameters (use --ml-config instead)
   python pipeline.py --ml --n-estimators 500 --max-depth 25
 
   # Dry run (see what would be executed)
-  python pipeline.py --all --dry-run
+  python pipeline.py --ml --ml-config config/models/gaia_2mass_ir.yaml --dry-run
+  python pipeline.py --predict --pred-config config/prediction/predict_all.yaml --dry-run
+  python pipeline.py --validate --val-config config/validation/validate_gaia_2mass_ir.yaml --dry-run
         """
     )
 
@@ -156,17 +241,51 @@ Examples:
         action='store_true',
         help='Run ML training pipeline only'
     )
+    pipeline_group.add_argument(
+        '--predict',
+        action='store_true',
+        help='Run prediction pipeline only'
+    )
+    pipeline_group.add_argument(
+        '--validate',
+        action='store_true',
+        help='Run validation pipeline only'
+    )
 
-    # Model parameters
+    # Model configuration
+    parser.add_argument(
+        '--ml-config',
+        type=str,
+        metavar='PATH',
+        help='Path to model configuration YAML file (e.g., config/models/gaia_2mass_ir.yaml)'
+    )
+
+    # Prediction configuration
+    parser.add_argument(
+        '--pred-config',
+        type=str,
+        metavar='PATH',
+        help='Path to prediction configuration YAML file (e.g., config/prediction/predict_gaia_2mass_ir.yaml)'
+    )
+
+    # Validation configuration
+    parser.add_argument(
+        '--val-config',
+        type=str,
+        metavar='PATH',
+        help='Path to validation configuration YAML file (e.g., config/validation/validate_gaia_2mass_ir.yaml)'
+    )
+
+    # Model parameters (legacy, for backward compatibility)
     parser.add_argument(
         '--n-estimators',
         type=int,
-        help='Number of trees in Random Forest (default: from config)'
+        help='Number of trees in Random Forest (default: from config) - LEGACY, use --ml-config instead'
     )
     parser.add_argument(
         '--max-depth',
         type=int,
-        help='Maximum depth of trees (default: from config)'
+        help='Maximum depth of trees (default: from config) - LEGACY, use --ml-config instead'
     )
 
     # Options
@@ -201,6 +320,7 @@ Examples:
             run_complete_pipeline(
                 n_estimators=args.n_estimators,
                 max_depth=args.max_depth,
+                model_config=args.ml_config,
                 dry_run=args.dry_run
             )
 
@@ -211,6 +331,19 @@ Examples:
             run_ml_pipeline(
                 n_estimators=args.n_estimators,
                 max_depth=args.max_depth,
+                model_config=args.ml_config,
+                dry_run=args.dry_run
+            )
+
+        elif args.predict:
+            run_prediction_pipeline(
+                pred_config=args.pred_config,
+                dry_run=args.dry_run
+            )
+
+        elif args.validate:
+            run_validation_pipeline(
+                val_config=args.val_config,
                 dry_run=args.dry_run
             )
 
