@@ -1,0 +1,55 @@
+# Prediction Configuration: Teff with logg perturbations
+# Predicts Teff for 3 variants per object (baseline, +σ, -σ)
+# Used for numerical gradient calculation of uncertainty propagation
+
+model:
+  # Use log-transformed Teff + logg model
+  model_file: "rf_gaia_all_colors_logg_teff_log_20251118_123639.pkl"
+
+data:
+  # Source dataset (expanded with 3 variants per object)
+  source_file: "data_for_teff_logg_perturbed.parquet"
+  source_location: "processed"
+  id_column: "source_id"
+
+preprocessing:
+  filter_missing: true
+  missing_value: -999.0
+
+  # Ensure required features are valid
+  required_features:
+    - "g"
+    - "bp"
+    - "rp"
+    - "bp_rp"
+    - "logg_gaia"
+
+feature_engineering:
+  # No feature engineering needed (model uses raw photometry)
+  enabled: false
+
+# No uncertainty estimation needed - we'll calculate it from variants
+uncertainty:
+  enabled: false
+
+output:
+  output_file: "teff_predictions_logg_perturbed.parquet"
+
+  # Include key metadata columns + variant tracking
+  include_columns:
+    - "source_id"
+    - "ra"
+    - "dec"
+    - "g"
+    - "bp"
+    - "rp"
+    - "bp_rp"
+    - "logg_gaia"
+    - "logg_uncertainty"
+    - "logg_predicted_original"
+    - "teff_source"
+    - "logg_source"
+    - "variant"
+    - "original_index"
+
+  save_summary: true

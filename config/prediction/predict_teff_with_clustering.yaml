@@ -1,0 +1,62 @@
+# Prediction Configuration: Teff with Clustering Features
+# Predicts Teff with uncertainties using Gaia photometry + cluster probabilities
+
+model:
+  # Use clustering model
+  model_file: "rf_gaia_cluster_20251117_165332.pkl"
+
+data:
+  # Source dataset (filtered for predicted Teff only)
+  source_file: "eb_unified_photometry_predicted_teff_only.parquet"
+  id_column: "source_id"
+
+preprocessing:
+  filter_missing: true
+  missing_value: -999.0
+
+  # Ensure required features are valid
+  required_features:
+    - "g"
+    - "bp"
+    - "rp"
+    - "bp_rp"
+
+feature_engineering:
+  # No feature engineering needed (model uses raw photometry)
+  enabled: false
+
+# Clustering configuration
+clustering:
+  enabled: true
+  method: "kmeans"  # Must match training (kmeans, gmm, bayesian_gmm)
+  features:
+    - "g"
+    - "bp"
+    - "rp"
+    - "bp_rp"
+    - "g_bp"
+    - "g_rp"
+
+# Uncertainty estimation configuration
+uncertainty:
+  fast: false  # Use full tree method (all 300 trees) for accurate uncertainties
+  # n_sample_trees: 20  # Not used when fast=false
+
+output:
+  output_file: "teff_predictions_with_clustering.parquet"
+
+  # Include key metadata columns
+  include_columns:
+    - "source_id"
+    - "ra"
+    - "dec"
+    - "g"
+    - "bp"
+    - "rp"
+    - "bp_rp"
+    - "teff_source"
+    - "logg_source"
+    - "teff_unified"
+    - "logg_unified"
+
+  save_summary: true
