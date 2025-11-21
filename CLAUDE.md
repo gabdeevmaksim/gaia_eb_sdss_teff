@@ -57,13 +57,21 @@ pip install -r requirements.txt
 **Primary Datasets**:
 - `eb_panstarrs_with_param-result.ecsv` - EB catalog with Pan-STARRS photometry
 - `stars_types.dat` - 2.1M EBs with Teff (58% have values, `--` = missing)
-- Key processed files: `ml_training_data_with_gaia.parquet`, `eb_unified_features_engineered.parquet`, `stars_types_with_predictions.parquet`
+- Key processed files: `ml_training_data_with_gaia.parquet`, `eb_unified_features_engineered.parquet`
 
-**Uncertainty Propagation Files** (NEW):
+**Uncertainty Propagation Files**:
 - `data_for_teff_logg_perturbed.parquet` - Expanded dataset (3 variants per object: baseline, +σ, -σ)
 - `teff_predictions_logg_perturbed.parquet` - Predictions for all variants (2.5M rows)
 - `teff_predictions_with_logg_propagated_final.parquet` - Final with propagated uncertainties (847k objects)
   - Columns: `teff_predicted`, `teff_unc_rf`, `teff_unc_logg`, `teff_unc_total`, `gradient_teff_logg`
+
+**Best-of-Three Ensemble**:
+- `teff_predictions_best_of_three.parquet` - Best prediction per object (lowest uncertainty, 847k objects)
+  - Columns: `source_id`, `teff_best`, `unc_best`, `best_model` (teff_only/teff_logg/teff_cluster)
+  - Mean uncertainty: 288K (18.8% improvement vs single model)
+- `stars_types_with_best_predictions.fits` - Full catalog (2.1M EBs, 97.2% with Teff, 196MB)
+  - Quality flags: A=Gaia, B=ML<300K, C=ML<500K, D=ML≥500K, X=none
+  - Description file: `stars_types_with_best_predictions_DESCRIPTION.txt`
 
 **Use `scripts/convert_ecsv_to_parquet.py` to convert for performance**
 
@@ -150,6 +158,18 @@ python scripts/visualize_propagated_uncertainties.py
 # Compare Teff Only, Teff+logg, Teff+Clustering with full tree uncertainties
 python scripts/compare_three_teff_models.py
 # Output: reports/figures/three_model_comparison/ (4 comparison plots)
+```
+
+**Best-of-Three Ensemble**:
+```bash
+# Create ensemble by selecting lowest uncertainty prediction per object
+python scripts/create_best_uncertainty_ensemble.py
+# Output: teff_predictions_best_of_three.parquet (mean unc: 288K, 18.8% improvement)
+
+# Create final catalog merging stars_types.dat with best predictions
+python scripts/create_stars_types_with_best_predictions.py
+# Output: stars_types_with_best_predictions.fits (2.1M EBs, 97.2% with Teff)
+#         + _DESCRIPTION.txt (comprehensive documentation)
 ```
 
 ## Code Architecture
