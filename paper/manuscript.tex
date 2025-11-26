@@ -1,0 +1,295 @@
+%% 
+%% Copyright 2007-2020 Elsevier Ltd
+%% 
+%% This file is part of the 'Elsarticle Bundle'.
+%% ---------------------------------------------
+%% 
+%% It may be distributed under the conditions of the LaTeX Project Public
+%% License, either version 1.2 of this license or (at your option) any
+%% later version.  The latest version of this license is in
+%%    http://www.latex-project.org/lppl.txt
+%% and version 1.2 or later is part of all distributions of LaTeX
+%% version 1999/12/01 or later.
+%% 
+%% The list of all files belonging to the 'Elsarticle Bundle' is
+%% given in the file `manifest.txt'.
+%% 
+%% Template article for Elsevier's document class `elsarticle'
+%% with harvard style bibliographic references
+
+\documentclass[preprint,12pt,authoryear]{elsarticle}
+
+%% Use the option review to obtain double line spacing
+%% \documentclass[authoryear,preprint,review,12pt]{elsarticle}
+
+%% Use the options 1p,twocolumn; 3p; 3p,twocolumn; 5p; or 5p,twocolumn
+%% for a journal layout:
+%% \documentclass[final,1p,times,authoryear]{elsarticle}
+%% \documentclass[final,1p,times,twocolumn,authoryear]{elsarticle}
+%% \documentclass[final,3p,times,authoryear]{elsarticle}
+%% \documentclass[final,3p,times,twocolumn,authoryear]{elsarticle}
+%% \documentclass[final,5p,times,authoryear]{elsarticle}
+%% \documentclass[final,5p,times,twocolumn,authoryear]{elsarticle}
+
+%% For including figures, graphicx.sty has been loaded in
+%% elsarticle.cls. If you prefer to use the old commands
+%% please give \usepackage{epsfig}
+
+%% The amssymb package provides various useful mathematical symbols
+\usepackage{amssymb}
+%% The amsmath package provides various useful equation environments.
+\usepackage{amsmath}
+%% The amsthm package provides extended theorem environments
+%% \usepackage{amsthm}
+\usepackage{hyperref}
+
+%% The lineno packages adds line numbers. Start line numbering with
+%% \begin{linenumbers}, end it with \end{linenumbers}. Or switch it on
+%% for the whole article with \linenumbers.
+%% \usepackage{lineno}
+
+\journal{Astronomy and Computing}
+
+\begin{document}
+
+\begin{frontmatter}
+
+%% Title, authors and addresses
+
+%% use the tnoteref command within \title for footnotes;
+%% use the tnotetext command for theassociated footnote;
+%% use the fnref command within \author or \affiliation for footnotes;
+%% use the fntext command for theassociated footnote;
+%% use the corref command within \author for corresponding author footnotes;
+%% use the cortext command for theassociated footnote;
+%% use the ead command for the email address,
+%% and the form \ead[url] for the home page:
+%% \title{Title\tnoteref{label1}}
+%% \tnotetext[label1]{}
+%% \author{Name\corref{cor1}\fnref{label2}}
+%% \ead{email address}
+%% \ead[url]{home page}
+%% \fntext[label2]{}
+%% \cortext[cor1]{}
+%% \affiliation{organization={},
+%%            addressline={}, 
+%%            city={},
+%%            postcode={}, 
+%%            state={},
+%%            country={}}
+%% \fntext[label3]{}
+
+\title{Optimizing Effective Temperature Estimation for Eclipsing Binaries using Gaia DR3 Photometry and Ensemble Machine Learning}
+
+%% use optional labels to link authors explicitly to addresses:
+%% \author[label1,label2]{}
+%% \affiliation[label1]{organization={},
+%%             addressline={},
+%%             city={},
+%%             postcode={},
+%%             state={},
+%%             country={}}
+%%
+%% \affiliation[label2]{organization={},
+%%             addressline={},
+%%             city={},
+%%             postcode={},
+%%             state={},
+%%             country={}}
+
+\author[1]{Author Name\corref{cor1}}
+\ead{author@email.com}
+\cortext[cor1]{Corresponding author}
+
+\affiliation[1]{organization={Department of Astronomy},%Department and Organization
+            addressline={Address}, 
+            city={City},
+            postcode={Zip}, 
+            state={State},
+            country={Country}}
+
+\begin{abstract}
+Eclipsing binaries (EBs) are fundamental benchmarks for stellar physics, yet a significant fraction of the ~2.5 million EBs in Gaia DR3 lack effective temperature ($T_{\rm eff}$) estimates or possess low-confidence parameters. This work presents a comprehensive machine learning framework to predict $T_{\rm eff}$ for approximately 1.2 million EBs using exclusively Gaia DR3 photometry ($G, BP, RP$). We initially explore multi-survey enrichment (SDSS, 2MASS) but prioritize a Gaia-only approach to maximize catalog coverage. To address the significant domain shift between the training set (objects with known $T_{\rm eff}$) and the full prediction set, we implement and compare three distinct modeling strategies: (1) a baseline Random Forest regressor on log-transformed temperatures, (2) a physics-informed model incorporating predicted surface gravity ($\log g$), and (3) a structure-augmented model leveraging unsupervised clustering of the color space. We introduce a "Best-of-Three" ensemble method that dynamically selects the prediction with the lowest internal model uncertainty for each source. Our final catalog achieves a Mean Absolute Error (MAE) of ~X K and provides robust uncertainty estimates, significantly improving coverage and reliability for eclipsing binary research.
+\end{abstract}
+
+%%Graphical abstract
+%\begin{graphicalabstract}
+%\includegraphics{grabs}
+%\end{graphicalabstract}
+
+%%Research highlights
+%\begin{highlights}
+%\item Research highlight 1
+%\item Research highlight 2
+%\end{highlights}
+
+\begin{keyword}
+Eclipsing Binaries \sep Gaia \sep Machine Learning \sep Effective Temperature \sep Ensemble Methods
+%% keywords here, in the form: keyword \sep keyword
+%% PACS codes here, in the form: \PACS code \sep code
+%% MSC codes here, in the form: \MSC code \sep code
+%% or \MSC[2008] code \sep code (2000 is the default)
+\end{keyword}
+
+\end{frontmatter}
+
+%% \linenumbers
+
+%% main text
+
+\section{Introduction}
+\label{sec:intro}
+
+Eclipsing binaries (EBs) serve as fundamental pillars of modern astrophysics, offering one of the few direct methods to measure stellar masses and radii with high precision \citep{Andersen1991, Torres2010}. 
+As geometric distance indicators and stringent tests for stellar evolution models, their accurate characterization is essential for calibrating the cosmic distance scale and understanding stellar structure. 
+With the eclipsing binaries catalog release of Gaia Data Release 3 (DR3) \citep{GaiaDR3_EB}, the astronomical community has gained access to a catalog of over 2 million identified eclipsing binaries, representing an order-of-magnitude increase over previous compilations.
+
+Traditionally, the precise determination of stellar parameters for eclipsing binaries requires a combination of multi-band photometric light curves and radial velocity measurements from spectroscopy. 
+Modeling the light curves yields geometric parameters (relative radii, inclination) and radiative properties (temperature ratios), while radial velocities constrain the absolute scale (masses, semi-major axis). 
+The effective temperatures of the individual components are typically anchored by spectroscopic analysis of the composite spectrum or by color indices calibrated against standard stars. 
+Several sophisticated codes have been developed to facilitate this modeling process, such as Wilson-Devinney (WD) code \citep{Wilson1971}, , JKTEBOP \citep{Southworth2008}, PHOEBE (Physics Of Eclipsing Binaries) \citep{Prsa2005, Prsa2016}, ELISa \citep{Cokina2021}, and TEB (Temperatures for EB) \citep{Miller2020}. 
+However, this comprehensive approach is resource-intensive and limited to relatively bright systems with extensive observational follow-up. 
+For large-scale surveys like Gaia, where only limited photometric epochs or low-resolution spectra may be available for millions of targets, these rigorous methods are computationally prohibitive or data-limited.
+Nethertheless, the General Stellar Parameterizer from Photometry (GSP-Phot) \citep{GSPphot} provides parameters for approximately 1.2 million sources from Gaia EB catalog: $T_{\rm eff}$, $logg$, and $Fe/H$ values.
+Nearly half of the catalog ($\sim$800,000 objects) lacks any estimates. 
+
+To bridge this gap, we turn to machine learning (ML) solutions, which are well-suited to model high-dimensional, non-linear relationships in large datasets \citep{Hastie2009}. 
+This work addresses the limitation by developing a homogeneous, high-coverage $T_{\rm eff}$ catalog for eclipsing binaries using ML techniques applied to Gaia DR3 photometry. 
+Our primary objective is to maximize the utility of the existing photometric data ($G, BP, RP$) to predict temperatures for the $\sim$800,000 sources where GSP-Phot data is unavailable.
+We tested different approaches to estimate effective temperatures. 
+By leveraging a ``Best-of-Three'' ensemble strategy we significantly extend the available sapmle for EB research.
+
+This work is a part of the project to develop a robust automated pipeline for estimating stellar parameters for EBs using photometry. 
+We created a synthetic dataset using ELISa to train models and try to solve the problem. 
+We already published the results of classification of EBs using computer vision techniques \citep{classification}.
+One can find the details about the dataset there. 
+We trained models to predict EB system parameters including $T1_{\rm_eff}/T2_{\rm_eff}$. 
+Thus we need to estimate $T_{\rm_eff}$ for one of the components to calculate absolute values for other parameters.
+
+The paper is organized as follows: in Section \ref{sec:data} we describe the data we used to train and test the models.
+In Section \ref{sec:methods} we describe the methodology we used to train the models.
+In Section \ref{sec:results} we present the results of the models.
+In Section \ref{sec:conclusion} we discuss the results and the future work.
+
+\section{Data Selection and Exploration}
+\label{sec:data}
+
+The primary dataset for this study is derived from the Gaia Data Release 3 (DR3) Eclipsing Binary catalog \citep{GaiaDR3_EB}, which contains approximately 2.1 million identified eclipsing systems. 
+This represents the largest homogeneous catalog of EBs to date, offering all-sky coverage and precise photometry in the Gaia $G$ (330--1050 nm), ${BP}$ (330--680 nm), and ${RP}$ (630--1050 nm) passbands \citep{GaiaDR3_main}.
+
+To enhance the feature space for temperature prediction, we initially explored enriching the Gaia catalog with multi-wavelength photometry from other large-scale surveys. 
+Specifically, we cross-matched the Gaia EB sources with the Pan-STARRS1 (PS1) DR2 catalog \citep{Chambers2017,Magnier2025}. 
+It provides $g, r, i, z, y$ photometry. And the Two Micron All Sky Survey (2MASS) \citep{Skrutskie2006}, which offers near-infrared $J, H, K_s$ magnitudes. 
+Our hypothesis was that additional passbands will provide valuable leverage for disentangling temperature and extinction, particularly in the near-infrared where the effects of dust are minimized. 
+The cross-matching process significantly reduced the sample size (\ref(table1)). 
+
+Requiring detections in all surveys restricted the dataset to a fraction of the original catalog, limiting the generalizability of the final model to the full objects sample. 
+To maximize coverage and ensure our predictions are available for the vast majority of Gaia EBs, we prioritized a Gaia-only photometric approach, relying on the $G, BP, RP$ bands and their derived colors.
+Neththeless, we trained and validate the models using different combinations of features to find the best performing model.
+
+\subsection{Validation and Correction of Training Labels}
+
+For training our machine learning models, we utilized the effective temperature ($T_{\rm eff}$) estimates provided by the Gaia GSP-Phot pipeline \citep{GSPphot}. 
+To assess the reliability of these labels, we compared the GSP-Phot temperatures against high-quality literature catalogs of detached eclipsing binaries (DEBCat) \citep{Southworth2015} and overcontact binaries (WUMaCat) \citep{WUMa_cat}. 
+This comparison revealed a strong overall correlation, validating the use of GSP-Phot values as a training baseline for the bulk of the population. 
+However, we identified a systematic bias in the high-temperature regime: for stars with $T_{\rm eff} \gtrsim 10,000$ K, GSP-Phot tends to underestimate the true effective temperature \ref(teff_comparison). 
+To mitigate this, we fitted a second-degree polynomial correction to the residuals between the GSP-Phot values and the trusted literature standards in this high-temperature domain. 
+This correction function was then applied to the training labels and incorporated into our final prediction pipeline to ensure accurate estimates for hotter systems.
+
+\section{Methodology: Addressing Domain Shift and Feature Engineering}
+\label{sec:methods}
+
+\begin{itemize}
+    \item \textbf{The Domain Shift Challenge:}
+        \begin{itemize}
+            \item Comparison of Training vs. Prediction distributions (Color-Magnitude Diagrams).
+            \item Failed mitigation attempts: Density-based reweighting and filtering by high-quality flags (why they didn't work).
+        \end{itemize}
+    \item \textbf{Feature Engineering Evolution:}
+        \begin{itemize}
+            \item Initial feature importance analysis: Dominance of $G$ and $BP-RP$.
+            \item The "Overfitting Paradox": Why simple models failed to generalize.
+            \item Expansion to full color combinations, colors-from-bands, and auxiliary features.
+        \end{itemize}
+    \item \textbf{Target Transformation:}
+        \begin{itemize}
+            \item Use of $\log_{10}(T_{\rm eff})$ to handle the dynamic range (3000K - 30000K) and improve performance on cool stars.
+        \end{itemize}
+\end{itemize}
+
+\section{Advanced Modeling Strategies}
+\label{sec:models}
+
+\begin{itemize}
+    \item \textbf{Model 1: Baseline Log-Teff:} Standard Random Forest on extended Gaia color features.
+    \item \textbf{Model 2: Physics-Augmented (The "Logg" Path):}
+        \begin{itemize}
+            \item Rationale: Breaking degeneracy between dwarf and giant stars.
+            \item Step 1: Predicting $\log g$ and [Fe/H] (and why [Fe/H] was dropped).
+            \item Step 2: Using predicted $\log g$ as a feature for $T_{\rm eff}$.
+            \item Uncertainty Propagation: Monte Carlo/Analytical propagation of $\log g$ errors.
+        \end{itemize}
+    \item \textbf{Model 3: Structure-Augmented (The "Clustering" Path):}
+        \begin{itemize}
+            \item Unsupervised learning (e.g., K-Means/GMM) on color space.
+            \item Using Cluster IDs to capture local non-linearities and distinct stellar populations.
+        \end{itemize}
+\end{itemize}
+
+\section{The "Best-of-Three" Ensemble}
+\label{sec:ensemble}
+
+\begin{itemize}
+    \item \textbf{Internal Uncertainty Estimation:} Using Random Forest variance/quantile spread.
+    \item \textbf{Selection Mechanism:} Dynamic selection of the model with the lowest uncertainty per object.
+    \item \textbf{Rationale:} Different models perform better in different regimes (e.g., Logg model for giants, Clustering model for complex color regions).
+\end{itemize}
+
+\section{Results and Validation}
+\label{sec:results}
+
+\begin{itemize}
+    \item \textbf{Model Comparison:} Statistical performance (MAE, RMSE, $R^2$) of the three approaches on the test set.
+    \item \textbf{Ensemble Performance:} Demonstration of uncertainty reduction and outlier mitigation.
+    \item \textbf{Catalog Characteristics:} Distribution of the final predicted temperatures.
+    \item \textbf{Validation against "Gold Standard" subsets:} Performance on high-quality literature EBs.
+\end{itemize}
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+\begin{itemize}
+    \item Summary of the "Best-of-Three" methodology.
+    \item Impact on the field (availability of the catalog).
+    \item Future work (e.g., inclusion of time-series features).
+\end{itemize}
+
+
+%% The Appendices part is started with the command \appendix;
+%% appendix sections are then done as normal sections
+\appendix
+
+\section{Feature Importance Plots}
+\label{app:features}
+
+\section{Uncertainty Validation}
+\label{app:uncertainty}
+
+%% If you have bib database file and want bibtex to generate the
+%% bibitems, please use
+%%
+\bibliographystyle{elsarticle-harv} 
+\bibliography{references}
+
+%% else use the following coding to input the bibitems directly in the
+%% TeX file.
+
+%%\begin{thebibliography}{00}
+%% \bibitem[Author(year)]{label}
+%% Text of bibliographic item
+%%\end{thebibliography}
+
+\end{document}
+
+\endinput
+
