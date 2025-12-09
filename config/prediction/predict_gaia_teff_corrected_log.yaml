@@ -1,0 +1,57 @@
+# Prediction Configuration: Gaia → log(Corrected Teff)
+# Uses the model trained on corrected and log-transformed Teff
+
+model:
+  # Use the corrected log model
+  model_file: "rf_gaia_teff_corrected_log_20251126_130144.pkl"
+
+data:
+  # Source dataset (filtered for predicted Teff only - ~847k objects)
+  source_file: "eb_unified_photometry_predicted_teff_only.parquet"
+  id_column: "source_id"
+  filters: {}
+
+preprocessing:
+  filter_missing: true
+  missing_value: -999.0
+
+  # Ensure required features are valid (all 6 Gaia colors)
+  required_features:
+    - "g"
+    - "bp"
+    - "rp"
+    - "bp_rp"
+    - "g_bp"
+    - "g_rp"
+
+feature_engineering:
+  enabled: false
+
+# IMPORTANT: Model predicts log10(Teff), need to convert back to Kelvin
+target_transform:
+  type: "log10"
+  inverse: true  # Convert predictions back to Kelvin
+
+# Uncertainty calculation
+uncertainty:
+  enabled: true
+  method: "full_tree"  # Accurate uncertainty (not fast sampling)
+  n_sample_trees: null  # Use all trees
+
+output:
+  output_file: "predictions_gaia_teff_corrected_log.parquet"
+
+  # Include key columns
+  include_columns:
+    - "source_id"
+    - "ra"
+    - "dec"
+    - "g"
+    - "bp"
+    - "rp"
+    - "bp_rp"
+    - "g_bp"
+    - "g_rp"
+    - "teff_gaia"  # Include original for comparison
+
+  save_summary: true

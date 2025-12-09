@@ -1,0 +1,76 @@
+{
+  "model_id": "rf_gaia_cluster_teff_corrected_20251208_092934",
+  "timestamp": "20251208_092934",
+  "model_name": "Gaia + Clustering \u2192 Corrected Teff",
+  "description": "Corrected temperature prediction using Gaia colors plus clustering features",
+  "model_type": "RandomForestRegressor",
+  "n_features": 11,
+  "features": [
+    "g",
+    "bp",
+    "rp",
+    "bp_rp",
+    "g_bp",
+    "g_rp",
+    "cluster_prob_0",
+    "cluster_prob_1",
+    "cluster_prob_2",
+    "cluster_prob_3",
+    "cluster_prob_4"
+  ],
+  "data_source": "gaia_all_colors_teff_corrected_with_logg.parquet",
+  "target": "teff_gaia_corrected",
+  "target_transform": "none",
+  "train_metrics": {
+    "mae": 546.1758857692186,
+    "rmse": 1041.5033309178764,
+    "r2": 0.7297923406776844,
+    "mean_relative_error": 8.811386516686937,
+    "within_5_percent": 46.75375049464607,
+    "within_10_percent": 68.69154850665862,
+    "within_20_percent": 88.92169116062578,
+    "n_samples": 1020932
+  },
+  "test_metrics": {
+    "mae": 609.5727596070781,
+    "rmse": 1170.9487805413285,
+    "r2": 0.6535462736654299,
+    "mean_relative_error": 9.795976752329645,
+    "within_5_percent": 43.93771989625206,
+    "within_10_percent": 65.56924234232116,
+    "within_20_percent": 86.68672669001779,
+    "n_samples": 255234
+  },
+  "hyperparameters": {
+    "n_estimators": 300,
+    "max_depth": 20,
+    "min_samples_split": 10,
+    "min_samples_leaf": 5,
+    "max_features": "sqrt",
+    "random_state": 42,
+    "n_jobs": -1,
+    "verbose": 0
+  },
+  "config_file": "config/models/gaia_cluster_teff_corrected.yaml",
+  "data_config": {
+    "source_file": "gaia_all_colors_teff_corrected_with_logg.parquet",
+    "source_format": "parquet",
+    "source_location": "processed",
+    "target": "teff_gaia_corrected",
+    "features": [
+      "g",
+      "bp",
+      "rp",
+      "bp_rp",
+      "g_bp",
+      "g_rp"
+    ],
+    "id_column": "source_id"
+  },
+  "clustering": {
+    "method": "kmeans",
+    "n_clusters": 5,
+    "model_file": "rf_gaia_cluster_teff_corrected_20251208_092934_clustering_kmeans.pkl",
+    "scaler_file": "rf_gaia_cluster_teff_corrected_20251208_092934_clustering_scaler.pkl"
+  }
+}

@@ -1,0 +1,34 @@
+Model: Gaia + Clustering → log(Corrected Teff)
+================================================================================
+
+Model ID: rf_gaia_cluster_teff_corrected_log_20251208_092956
+Timestamp: 20251208_092956
+Description: Log-transformed corrected temperature prediction using Gaia colors plus clustering
+
+Data Source: gaia_all_colors_teff_corrected_with_logg.parquet
+Target: teff_gaia_corrected_log
+Features: 11
+
+TRAIN SET PERFORMANCE:
+  MAE:  0.0 K
+  RMSE: 0.1 K
+  R²:   0.7328
+  Within 10%: 99.9%
+
+TEST SET PERFORMANCE:
+  MAE:  0.0 K
+  RMSE: 0.1 K
+  R²:   0.6642
+  Within 10%: 99.9%
+
+TOP 10 FEATURES:
+   1. cluster_prob_2                 0.1734
+   2. bp_rp                          0.1609
+   3. bp                             0.1451
+   4. g_rp                           0.1180
+   5. g                              0.1153
+   6. g_bp                           0.0944
+   7. rp                             0.0664
+   8. cluster_prob_1                 0.0385
+   9. cluster_prob_4                 0.0306
+  10. cluster_prob_3                 0.0300

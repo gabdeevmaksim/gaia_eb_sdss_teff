@@ -1,0 +1,50 @@
+Validation Report: Gaia + Clustering → log(Corrected Teff)
+================================================================================
+
+Model ID: rf_gaia_cluster_teff_corrected_log_20251208_092956
+Model File: /Users/wera/Max_astro/Slovakia/gaia_eb_sdss_teff/models/rf_gaia_cluster_teff_corrected_log_20251208_092956.pkl
+Validation Date: 2025-12-08 10:06:17
+
+Test Set: 255,234 samples
+
+OVERALL PERFORMANCE:
+  MAE:  586.5762 K
+  RMSE: 1176.0149 K
+  R²:   0.6505
+  Mean Relative Error: 9.21%
+
+ACCURACY THRESHOLDS:
+  Within  5%: 45.9%
+  Within 10%: 68.0%
+  Within 20%: 88.3%
+
+PERFORMANCE BY TEMPERATURE RANGE:
+
+  [0.00 - 4000.00] K (n=26,745):
+    MAE:  355.5635 K
+    RMSE: 588.1082 K
+    R²:   -14.3946
+
+  [4000.00 - 5000.00] K (n=101,138):
+    MAE:  311.6710 K
+    RMSE: 479.8788 K
+    R²:   -1.9984
+
+  [5000.00 - 6000.00] K (n=71,296):
+    MAE:  390.8823 K
+    RMSE: 511.4566 K
+    R²:   -2.3226
+
+  [6000.00 - 8000.00] K (n=37,971):
+    MAE:  709.2882 K
+    RMSE: 948.4685 K
+    R²:   -1.7383
+
+  [8000.00 - 50000.00] K (n=18,084):
+    MAE:  2979.5471 K
+    RMSE: 3847.0687 K
+    R²:   0.0300
+
+VALIDATION PLOTS:
+  Location: reports/figures/gaia_cluster_teff_corrected_log_validation/
+  Number of plots: 5

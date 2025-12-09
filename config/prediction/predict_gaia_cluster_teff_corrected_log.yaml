@@ -1,0 +1,65 @@
+# Prediction Configuration: Gaia + Clustering → log(Corrected Teff)
+# Predicts for objects WITHOUT original Teff values only
+
+model:
+  model_file: "rf_gaia_cluster_teff_corrected_log_20251208_092956.pkl"
+
+data:
+  # Source dataset (filtered for predicted Teff only - ~908k objects)
+  source_file: "eb_unified_photometry_predicted_teff_only.parquet"
+  id_column: "source_id"
+  filters: {}
+
+preprocessing:
+  filter_missing: true
+  missing_value: -999.0
+
+  required_features:
+    - "g"
+    - "bp"
+    - "rp"
+    - "bp_rp"
+    - "g_bp"
+    - "g_rp"
+
+feature_engineering:
+  enabled: false
+
+# Clustering configuration (must match training)
+clustering:
+  enabled: true
+  method: "kmeans"
+  features:
+    - "g"
+    - "bp"
+    - "rp"
+    - "bp_rp"
+    - "g_bp"
+    - "g_rp"
+
+# IMPORTANT: Model predicts log10(Teff), need to convert back to Kelvin
+target_transform:
+  type: "log10"
+  inverse: true  # Convert predictions back to Kelvin
+
+# Uncertainty estimation
+uncertainty:
+  enabled: true
+  method: "full_tree"  # Accurate uncertainty (not fast sampling)
+  n_sample_trees: null  # Use all trees
+
+output:
+  output_file: "teff_predictions_cluster_corrected_log.parquet"
+
+  include_columns:
+    - "source_id"
+    - "ra"
+    - "dec"
+    - "g"
+    - "bp"
+    - "rp"
+    - "bp_rp"
+    - "teff_unified"
+    - "logg_unified"
+
+  save_summary: true

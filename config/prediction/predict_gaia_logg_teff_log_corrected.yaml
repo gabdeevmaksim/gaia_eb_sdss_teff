@@ -1,0 +1,54 @@
+# Prediction Configuration: Gaia + logg → log(Corrected Teff)
+
+model:
+  model_file: "rf_gaia_logg_teff_log_corrected_20251126_144537.pkl"
+
+data:
+  # Source dataset (filtered for predicted Teff only - ~847k objects)
+  source_file: "eb_unified_photometry_predicted_teff_only.parquet"
+  id_column: "source_id"
+  filters: {}
+
+preprocessing:
+  filter_missing: true
+  missing_value: -999.0
+
+  required_features:
+    - "g"
+    - "bp"
+    - "rp"
+    - "bp_rp"
+    - "g_bp"
+    - "g_rp"
+    - "logg_gaia"
+
+feature_engineering:
+  enabled: false
+
+# Model predicts log10(Teff), convert to Kelvin
+target_transform:
+  type: "log10"
+  inverse: true
+
+uncertainty:
+  enabled: true
+  method: "full_tree"
+  n_sample_trees: null
+
+output:
+  output_file: "predictions_gaia_logg_teff_log_corrected.parquet"
+
+  include_columns:
+    - "source_id"
+    - "ra"
+    - "dec"
+    - "g"
+    - "bp"
+    - "rp"
+    - "bp_rp"
+    - "g_bp"
+    - "g_rp"
+    - "logg_gaia"
+    - "teff_gaia"
+
+  save_summary: true
