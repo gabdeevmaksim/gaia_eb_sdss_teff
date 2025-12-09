@@ -385,6 +385,44 @@ python pipeline.py --ml --ml-config config/models/gaia_2mass_ir.yaml
 
 ## Recent Updates
 
+### Corrected Teff Pipeline & Best-of-Three Ensemble (2025-12-09)
+- **Problem**: Gaia GSP-Phot systematically underestimates Teff for stars >10000K
+- **Solution**: Polynomial correction (degree 2) applied to training data before ML training
+- **Correction coefficients**: `data/teff_correction_coeffs_deg2.pkl` (threshold 10000K, RMS 3209K)
+
+**Pipeline Updates**:
+- Added `ConvertLogPredictionsStep` to prediction pipeline
+- Automatically converts BOTH predictions AND uncertainties from log space to Kelvin
+- Formula: `Teff = 10^prediction`, `unc_kelvin = Teff × unc_log × ln(10)`
+
+**Three Corrected Models Trained**:
+1. **Gaia colors only** → log(Teff_corrected): 290K mean uncertainty
+2. **Gaia + logg** → log(Teff_corrected): 277K mean uncertainty
+3. **Gaia + clustering** → log(Teff_corrected): 346K mean uncertainty
+
+**Best-of-Three Ensemble**:
+- Selects prediction with lowest uncertainty for each object
+- **Result**: 263K mean uncertainty (18% improvement vs single best model)
+- Model distribution: 44.9% colors-only, 31.0% +logg, 24.1% +clustering
+- Output: `teff_predictions_best_of_three_corrected.parquet` (847k predictions)
+
+**Final Catalog**:
+- **File**: `stars_types_with_best_predictions_corrected.fits` (196 MB)
+- **Total objects**: 2.1M eclipsing binaries
+- **Coverage**: 97.2% with Teff (58.3% Gaia original, 38.9% ML predictions)
+- **Quality flags**: A (Gaia), B (ML<300K), C (ML<500K), D (ML≥500K), X (none)
+
+**Key Findings**:
+- Teff correction improves uncertainties by **18%** for color-only models
+- Correction **hurts** performance when logg is included (-6.4%)
+- **Recommendation**: Use correction only for photometry-only models
+- Log transformation helps across all feature combinations (3.8-16% improvement)
+
+**Scripts**:
+- `apply_teff_correction_to_training_data.py` - Apply polynomial correction
+- `create_final_catalog_with_corrected_teff.py` - Create best-of-three + merge with stars_types.dat
+- `compare_model_uncertainties.py` - Compare RF uncertainties between models
+
 ### Target Transformation (2025-11-12)
 - Added to `src/pipeline/configurable_ml_pipeline.py`
 - Usage: `target_transform: "log"` in model config (options: `log`, `log2`, `ln`, `none`)
