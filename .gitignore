@@ -1,13 +1,19 @@
 # Data files
-data/raw/*
-data/processed/*
-data/external/*
-data/interim/*
-!data/*/README.md
+data/
+!data/.gitkeep
 
 # Model files (too large for GitHub)
-models/*.pkl
-models/*.parquet
+models/
+!models/.gitkeep
+
+# Reports and figures
+reports/
+
+# Jupyter notebooks (not needed in deployment)
+notebooks/
+
+# Examples (not needed in deployment)
+examples/
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
@@ -21,6 +27,22 @@ __pycache__/
 venv/
 env/
 .env
+
+# Development config files (keep only essential ones in git)
+config/models/*.yaml
+!config/models/model_registry.yaml
+config/prediction/*.yaml
+!config/prediction/predict_gaia_teff_corrected_log.yaml
+!config/prediction/predict_gaia_cluster_teff_corrected_log.yaml
+!config/prediction/predict_gaia_logg_teff_log_corrected.yaml
+config/validation/*.yaml
+!config/validation/validate_gaia_cluster_teff_corrected_log.yaml
+
+# Development scripts (keep only deployment scripts)
+scripts/*
+!scripts/download_datasets.py
+!scripts/upload_to_huggingface.py
+!scripts/.gitkeep
 
 # IDE
 .vscode/
