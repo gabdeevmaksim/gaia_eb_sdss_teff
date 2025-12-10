@@ -38,9 +38,9 @@ except ImportError:
 import yaml
 
 
-# TODO: Replace with your actual HuggingFace organization/username
-HF_DATASET_REPO = "YOUR_ORG/gaia-eb-teff-datasets"
-HF_MODEL_REPO = "YOUR_ORG/gaia-eb-teff-models"
+# HuggingFace repositories
+HF_DATASET_REPO = "Dedulek/gaia-eb-teff-datasets"
+HF_MODEL_REPO = "Dedulek/gaia-eb-teff-models"
 
 
 def create_repositories():
