@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Training service - Full environment for model training
   train:
