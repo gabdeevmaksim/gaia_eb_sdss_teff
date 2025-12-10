@@ -13,15 +13,32 @@ Style conventions:
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 from pathlib import Path
 from typing import Union, Optional, Dict
 from scipy import stats
 
-# Plotting setup
-plt.style.use('default')
-sns.set_palette("husl")
+# Optional plotting dependencies (for prediction-only containers)
+try:
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    # Plotting setup
+    plt.style.use('default')
+    sns.set_palette("husl")
+    HAS_PLOTTING = True
+except ImportError:
+    HAS_PLOTTING = False
+    plt = None
+    sns = None
+
+
+def _check_plotting_available():
+    """Raise error if plotting dependencies are not available."""
+    if not HAS_PLOTTING:
+        raise ImportError(
+            "Plotting dependencies (matplotlib, seaborn) are not installed. "
+            "Install with: pip install matplotlib seaborn\n"
+            "Or use the training Docker image (Dockerfile.train) which includes these dependencies."
+        )
 
 
 def save_figure(fig, filename: str, subdir: str, dpi: int = 300):
@@ -39,6 +56,7 @@ def save_figure(fig, filename: str, subdir: str, dpi: int = 300):
     dpi : int, default 300
         Resolution for saved figure
     """
+    _check_plotting_available()
     fig_dir = Path('reports/figures') / subdir
     fig_dir.mkdir(parents=True, exist_ok=True)
     filepath = fig_dir / filename
