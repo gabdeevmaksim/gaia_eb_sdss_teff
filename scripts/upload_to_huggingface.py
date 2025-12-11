@@ -11,8 +11,8 @@ Prerequisites:
     - Or set HF_TOKEN environment variable
 
 Usage:
-    # Upload training datasets
-    python scripts/upload_to_huggingface.py --datasets training
+    # Upload unified photometry dataset
+    python scripts/upload_to_huggingface.py --datasets photometry
 
     # Upload catalog
     python scripts/upload_to_huggingface.py --datasets catalog
@@ -81,30 +81,30 @@ def upload_datasets(dataset_type: str):
     Parameters
     ----------
     dataset_type : str
-        Type of dataset to upload: 'training', 'catalog', 'prediction', or 'all'
+        Type of dataset to upload: 'photometry', 'catalog', 'training', or 'all'
     """
     api = HfApi()
 
     datasets = {
-        'training': {
+        'photometry': {
             'folder': 'data/processed',
-            'patterns': ['gaia_all_colors_train*.parquet'],
-            'path_in_repo': 'training'
+            'patterns': ['eb_unified_photometry.parquet', 'eb_unified_photometry_SUMMARY.txt'],
+            'path_in_repo': 'photometry'
         },
         'catalog': {
             'folder': 'data/processed',
             'patterns': ['stars_types_with_best_predictions*'],
             'path_in_repo': 'catalogs'
         },
-        'prediction': {
+        'training': {
             'folder': 'data/processed',
-            'patterns': ['gaia_all_colors_predict.parquet', 'eb_2mass_photometry.parquet'],
-            'path_in_repo': 'prediction'
+            'patterns': ['gaia_all_colors_train*.parquet'],
+            'path_in_repo': 'training'
         }
     }
 
     if dataset_type == 'all':
-        for dt in ['training', 'catalog', 'prediction']:
+        for dt in ['photometry', 'catalog', 'training']:
             upload_datasets(dt)
         return
 
@@ -263,7 +263,7 @@ def main():
     )
     parser.add_argument(
         '--datasets',
-        choices=['training', 'catalog', 'prediction', 'all'],
+        choices=['photometry', 'catalog', 'training', 'all'],
         help='Dataset type to upload'
     )
     parser.add_argument(
