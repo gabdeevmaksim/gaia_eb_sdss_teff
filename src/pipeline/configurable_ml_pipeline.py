@@ -144,10 +144,21 @@ class ApplyTeffCorrectionStep(PipelineStep):
             return context
 
         self.logger.info(f"Loading correction coefficients from: {coeffs_path}")
-        coeffs = joblib.load(coeffs_path)
+        coeffs_data = joblib.load(coeffs_path)
+
+        # Handle both dict format (with Polynomial object) and array format
+        if isinstance(coeffs_data, dict):
+            polynomial = coeffs_data['polynomial']
+            degree = coeffs_data.get('degree', 2)
+            self.logger.info(f"Using numpy Polynomial object (degree {degree})")
+        else:
+            # Legacy format: simple array of coefficients
+            coeffs_array = coeffs_data
+            degree = len(coeffs_array) - 1
+            self.logger.info(f"Using coefficient array (degree {degree})")
 
         # Apply correction
-        self.logger.info(f"Applying polynomial correction (degree {len(coeffs)-1}) for Teff > {threshold} K")
+        self.logger.info(f"Applying polynomial correction for Teff > {threshold} K")
 
         # Convert to pandas for easier manipulation
         df_pd = df.to_pandas()
@@ -157,12 +168,17 @@ class ApplyTeffCorrectionStep(PipelineStep):
         n_corrected = needs_correction.sum()
 
         if n_corrected > 0:
-            # Apply polynomial correction: Teff_corrected = sum(coeffs[i] * Teff^i)
             teff_original = df_pd.loc[needs_correction, target_column].values
-            teff_corrected = np.zeros_like(teff_original)
 
-            for i, coeff in enumerate(coeffs):
-                teff_corrected += coeff * (teff_original ** i)
+            # Apply correction based on format
+            if isinstance(coeffs_data, dict):
+                # Use Polynomial object's __call__ method
+                teff_corrected = polynomial(teff_original)
+            else:
+                # Apply polynomial correction manually: Teff_corrected = sum(coeffs[i] * Teff^i)
+                teff_corrected = np.zeros_like(teff_original)
+                for i, coeff in enumerate(coeffs_array):
+                    teff_corrected += coeff * (teff_original ** i)
 
             # Calculate correction statistics
             mean_correction = (teff_corrected - teff_original).mean()
@@ -192,7 +208,7 @@ class ApplyTeffCorrectionStep(PipelineStep):
                 'mean_correction': float(mean_correction),
                 'median_correction': float(median_correction),
                 'threshold': threshold,
-                'degree': len(coeffs) - 1
+                'degree': degree
             }
         else:
             self.logger.info("No stars above threshold - no correction applied")
