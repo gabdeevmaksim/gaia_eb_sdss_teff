@@ -14,3 +14,7 @@ reproject
 aplpy
 pyvo
 astroquery
+huggingface_hub
+joblib
+tqdm
+requests

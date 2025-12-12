@@ -58,23 +58,22 @@ def download_from_huggingface(dataset_name: str, output_dir: str = "data/process
     # Define dataset files
     datasets = {
         'training': [
-            'training/gaia_all_colors_teff_corrected.parquet',
-            'training/gaia_all_colors_train.parquet',
-            'training/gaia_all_colors_train_with_logg.parquet',
+            'photometry/eb_unified_photometry.parquet',
+            'photometry/eb_unified_photometry_SUMMARY.txt',
         ],
         'catalog': [
             'catalogs/stars_types_with_best_predictions.fits',
             'catalogs/stars_types_with_best_predictions_DESCRIPTION.txt',
         ],
-        'prediction': [
-            'prediction/gaia_all_colors_predict.parquet',
-            'prediction/eb_2mass_photometry.parquet',
+        'correction': [
+            'correction/teff_correction_coeffs_deg2.pkl',
         ],
         'all': [
-            'training/*.parquet',
+            'photometry/*.parquet',
+            'photometry/*.txt',
             'catalogs/*.fits',
             'catalogs/*.txt',
-            'prediction/*.parquet',
+            'correction/*.pkl',
         ]
     }
 
@@ -108,6 +107,21 @@ def download_from_huggingface(dataset_name: str, output_dir: str = "data/process
                     local_dir_use_symlinks=False
                 )
                 print(f"    ✓ Downloaded to: {downloaded_file}")
+
+                # Move file to output_path root if it was downloaded with subdirectory
+                from pathlib import Path as PathLib
+                downloaded_path = PathLib(downloaded_file)
+                target_path = output_path / downloaded_path.name
+                if downloaded_path != target_path and downloaded_path.exists():
+                    import shutil
+                    shutil.move(str(downloaded_path), str(target_path))
+                    print(f"    → Moved to: {target_path}")
+                    # Clean up empty subdirectory if it exists
+                    if downloaded_path.parent != output_path and downloaded_path.parent.exists():
+                        try:
+                            downloaded_path.parent.rmdir()
+                        except:
+                            pass
 
             downloaded_count += 1
 
@@ -217,7 +231,7 @@ def main():
     )
     parser.add_argument(
         '--datasets',
-        choices=['training', 'catalog', 'prediction', 'all'],
+        choices=['training', 'catalog', 'correction', 'all'],
         help='Dataset to download'
     )
     parser.add_argument(
@@ -252,7 +266,9 @@ def main():
 
     # Download datasets
     if args.datasets:
-        if not download_from_huggingface(args.datasets, args.output_data):
+        # Correction coefficients go to data/ root, others to data/processed
+        output_dir = "data" if args.datasets == 'correction' else args.output_data
+        if not download_from_huggingface(args.datasets, output_dir):
             success = False
 
     # Download models

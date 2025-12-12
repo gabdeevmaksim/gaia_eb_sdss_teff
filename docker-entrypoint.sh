@@ -5,11 +5,17 @@ echo "Starting Gaia EB Teff Pipeline..."
 
 # Auto-download datasets if not present and HF_TOKEN is set
 if [ ! -z "$HF_TOKEN" ]; then
-    if [ ! -f "data/processed/gaia_all_colors_teff_corrected.parquet" ]; then
+    if [ ! -f "data/processed/eb_unified_photometry.parquet" ]; then
         echo "Training data not found. Downloading from HuggingFace..."
         python scripts/download_datasets.py --datasets training || echo "Warning: Could not download datasets"
     else
         echo "Training data found. Skipping download."
+    fi
+
+    # Auto-download Teff correction coefficients if not present
+    if [ ! -f "teff_correction_coeffs_deg2.pkl" ]; then
+        echo "Teff correction coefficients not found. Downloading from HuggingFace..."
+        python scripts/download_datasets.py --datasets correction || echo "Warning: Could not download correction coefficients"
     fi
 else
     echo "HF_TOKEN not set. Skipping auto-download. Set HF_TOKEN to enable automatic dataset downloads."
