@@ -55,12 +55,13 @@ ConfigurableMLPipeline
 │
 ├── 1. Load Model Configuration (YAML)
 ├── 2. Load Training Data (from config)
-├── 3. Preprocess Data (filter missing values)
-├── 4. Engineer Features (if enabled)
-├── 5. Prepare Train/Test Split
-├── 6. Train Random Forest Model
-├── 7. Evaluate Performance
-└── 8. Save Model + Artifacts
+├── 3. Apply Teff Correction (if enabled) **NEW**
+├── 4. Preprocess Data (filter missing values)
+├── 5. Engineer Features (if enabled)
+├── 6. Prepare Train/Test Split
+├── 7. Train Random Forest Model
+├── 8. Evaluate Performance
+└── 9. Save Model + Artifacts
 ```
 
 Each step reads from the shared configuration, making the pipeline adapt to different model variants automatically.
@@ -120,6 +121,15 @@ preprocessing:
   use_sample_weights: false
   weight_column: "sample_weight"
 
+# Teff Correction (NEW - optional)
+# Applies polynomial correction to hot stars before training
+teff_correction:
+  enabled: true                                    # Enable/disable correction
+  target_column: "teff_gaia"                       # Original Teff column
+  threshold: 10000                                 # Apply correction for Teff > 10,000 K
+  coefficients_file: "teff_correction_coeffs_deg2.pkl"  # Polynomial coefficients
+  # Note: Creates new column '{target_column}_corrected'
+
 hyperparameters:
   n_estimators: 300
   max_depth: 20
@@ -177,7 +187,39 @@ Data preprocessing:
 - `use_sample_weights`: Apply distribution matching weights?
 - `weight_column`: Column name for weights
 
-#### 5. `hyperparameters` (optional)
+#### 5. `teff_correction` (optional) **NEW**
+
+Polynomial correction for hot stars (Teff > threshold):
+- `enabled`: Apply correction during pipeline (default: false)
+- `target_column`: Column containing original Teff values
+- `threshold`: Apply correction for stars with Teff > threshold (Kelvin)
+- `coefficients_file`: Path to joblib file with polynomial coefficients (relative to data root)
+
+**What it does:**
+- Loads polynomial coefficients from specified file
+- Applies correction: `Teff_corrected = c0 + c1*Teff + c2*Teff^2 + ...`
+- Creates new column: `{target_column}_corrected`
+- Logs correction statistics (mean/median correction, number of stars affected)
+- Saves correction info in model metadata
+
+**When to use:**
+- Gaia GSP-Phot systematically underestimates Teff for hot stars (>10,000K)
+- Use this to train models on corrected temperatures
+- Update `data.target` to use the corrected column: `teff_gaia_corrected`
+
+**Example:**
+```yaml
+teff_correction:
+  enabled: true
+  target_column: "teff_gaia"
+  threshold: 10000
+  coefficients_file: "teff_correction_coeffs_deg2.pkl"
+
+data:
+  target: "teff_gaia_corrected"  # Use corrected values as target
+```
+
+#### 6. `hyperparameters` (optional)
 
 Random Forest parameters (defaults from `config/config.yaml` if omitted):
 - `n_estimators`: Number of trees
@@ -188,13 +230,13 @@ Random Forest parameters (defaults from `config/config.yaml` if omitted):
 - `n_jobs`: Parallel jobs (-1 = all CPUs)
 - `random_state`: Reproducibility seed
 
-#### 6. `training` (optional)
+#### 7. `training` (optional)
 
 Train/test split configuration:
 - `test_size`: Fraction for test set (0.0-1.0)
 - `random_state`: Split reproducibility seed
 
-#### 7. `validation` (optional)
+#### 8. `validation` (optional)
 
 Validation configuration (future use):
 - `create_plots`: Generate validation plots automatically

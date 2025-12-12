@@ -1,0 +1,91 @@
+# Gaia Teff Model Configuration with Polynomial Correction
+# This example demonstrates how to use the configurable Teff correction feature
+# to apply polynomial correction to hot stars (Teff > 10,000K) before training
+
+model:
+  name: "Gaia All Colors → Teff (with correction)"
+  id_prefix: "rf_gaia_teff_corrected"
+  description: "Temperature prediction using Gaia colors with polynomial correction for hot stars"
+
+# Teff Correction Configuration (NEW FEATURE)
+# Applies polynomial correction to stars above threshold temperature
+teff_correction:
+  enabled: true                                    # Enable/disable correction
+  target_column: "teff_gaia"                       # Original Teff column to correct
+  threshold: 10000                                 # Apply correction for Teff > 10,000 K
+  coefficients_file: "teff_correction_coeffs_deg2.pkl"  # Polynomial coefficients file
+  # Note: After correction, a new column 'teff_gaia_corrected' is created
+
+# Target transformation setting
+target_transform: "log"  # Options: none, log, log2, ln
+
+data:
+  # Use unified photometry dataset (raw data from HuggingFace)
+  source_file: "eb_unified_photometry.parquet"
+  source_format: "parquet"
+  source_location: "processed"
+
+  # Target the CORRECTED column (created by teff_correction step)
+  target: "teff_gaia_corrected"
+
+  # All Gaia colors + bands
+  features:
+    - "g"        # G-band magnitude
+    - "bp"       # Blue photometer magnitude
+    - "rp"       # Red photometer magnitude
+    - "bp_rp"    # BP-RP color (most important)
+    - "g_bp"     # G-BP color
+    - "g_rp"     # G-RP color
+
+  id_column: "source_id"
+
+preprocessing:
+  missing_value: -999.0
+
+  # Quality filters for training (applied AFTER correction)
+  filters:
+    teff_gaia_corrected: [2500, 50000]  # Filter on corrected values
+    bp_rp: [-0.5, 6.0]                  # Typical stellar colors
+    g_bp: [-5.0, 2.0]                   # Reasonable range
+    g_rp: [-1.0, 3.0]                   # Reasonable range
+
+training:
+  test_size: 0.2
+  random_state: 42
+
+hyperparameters:
+  n_estimators: 300
+  max_depth: 20
+  min_samples_split: 5
+  min_samples_leaf: 2
+  max_features: "sqrt"
+  random_state: 42
+  n_jobs: -1
+
+output:
+  save_model: true
+  save_predictions: true
+  save_test_predictions: true
+  models_dir: "models"
+  predictions_dir: "data/predictions"
+
+validation:
+  create_plots: true
+  n_temp_bins: 5
+  target_info:
+    name: "Temperature"
+    unit: "K"
+    short: "Teff"
+
+# Pipeline Execution Order:
+# 1. Load data (eb_unified_photometry.parquet)
+# 2. Apply Teff correction (creates teff_gaia_corrected column)
+# 3. Preprocess data (filters, missing values)
+# 4. Engineer features (if configured)
+# 5. Train model on corrected target
+# 6. Evaluate and save
+#
+# Model metadata will include correction statistics:
+# - Number of stars corrected
+# - Mean/median correction applied
+# - Polynomial degree and threshold

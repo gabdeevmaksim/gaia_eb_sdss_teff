@@ -103,6 +103,105 @@ class LoadDataFromConfigStep(PipelineStep):
         return context
 
 
+class ApplyTeffCorrectionStep(PipelineStep):
+    """Apply polynomial Teff correction if configured."""
+
+    def __init__(self):
+        super().__init__("Apply Teff Correction")
+
+    def run(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        df = context['raw_data']
+        model_config = context['model_config']
+        config = context['config']
+
+        # Check if Teff correction is enabled
+        teff_correction = model_config.get('teff_correction', {})
+
+        if not teff_correction.get('enabled', False):
+            self.logger.info("Teff correction disabled - skipping")
+            context['teff_correction_applied'] = False
+            return context
+
+        self.logger.info("Applying Teff correction to target variable")
+
+        # Get configuration
+        target_column = teff_correction.get('target_column', 'teff_gaia')
+        threshold = teff_correction.get('threshold', 10000)
+        coeffs_file = teff_correction.get('coefficients_file', 'teff_correction_coeffs_deg2.pkl')
+
+        # Check if target column exists
+        if target_column not in df.columns:
+            self.logger.warning(f"Target column '{target_column}' not found - skipping correction")
+            context['teff_correction_applied'] = False
+            return context
+
+        # Load correction coefficients
+        coeffs_path = Path(config.get_path('data_root')) / coeffs_file
+        if not coeffs_path.exists():
+            self.logger.warning(f"Correction coefficients not found: {coeffs_path}")
+            self.logger.warning("Skipping Teff correction")
+            context['teff_correction_applied'] = False
+            return context
+
+        self.logger.info(f"Loading correction coefficients from: {coeffs_path}")
+        coeffs = joblib.load(coeffs_path)
+
+        # Apply correction
+        self.logger.info(f"Applying polynomial correction (degree {len(coeffs)-1}) for Teff > {threshold} K")
+
+        # Convert to pandas for easier manipulation
+        df_pd = df.to_pandas()
+
+        # Identify rows needing correction
+        needs_correction = (df_pd[target_column] > threshold) & (df_pd[target_column] != -999.0)
+        n_corrected = needs_correction.sum()
+
+        if n_corrected > 0:
+            # Apply polynomial correction: Teff_corrected = sum(coeffs[i] * Teff^i)
+            teff_original = df_pd.loc[needs_correction, target_column].values
+            teff_corrected = np.zeros_like(teff_original)
+
+            for i, coeff in enumerate(coeffs):
+                teff_corrected += coeff * (teff_original ** i)
+
+            # Calculate correction statistics
+            mean_correction = (teff_corrected - teff_original).mean()
+            median_correction = np.median(teff_corrected - teff_original)
+
+            self.logger.info(f"Correcting {n_corrected:,} stars ({n_corrected/len(df)*100:.1f}%)")
+            self.logger.info(f"  Mean correction: {mean_correction:+.0f} K")
+            self.logger.info(f"  Median correction: {median_correction:+.0f} K")
+            self.logger.info(f"  Original Teff range: {teff_original.min():.0f} - {teff_original.max():.0f} K")
+            self.logger.info(f"  Corrected Teff range: {teff_corrected.min():.0f} - {teff_corrected.max():.0f} K")
+
+            # Create corrected column
+            corrected_column = f"{target_column}_corrected"
+            df_pd[corrected_column] = df_pd[target_column].copy()
+            df_pd.loc[needs_correction, corrected_column] = teff_corrected
+
+            self.logger.info(f"Created corrected column: {corrected_column}")
+
+            # Convert back to polars
+            df = pl.from_pandas(df_pd)
+
+            # Store correction info
+            context['teff_correction_applied'] = True
+            context['teff_correction_column'] = corrected_column
+            context['teff_correction_stats'] = {
+                'n_corrected': int(n_corrected),
+                'mean_correction': float(mean_correction),
+                'median_correction': float(median_correction),
+                'threshold': threshold,
+                'degree': len(coeffs) - 1
+            }
+        else:
+            self.logger.info("No stars above threshold - no correction applied")
+            context['teff_correction_applied'] = False
+
+        context['raw_data'] = df
+        return context
+
+
 class PreprocessDataStep(PipelineStep):
     """Preprocess data based on configuration."""
 
@@ -705,6 +804,12 @@ class SaveModelFromConfigStep(PipelineStep):
             'data_config': model_config['data']  # Save full data config for validation
         }
 
+        # Add Teff correction info if applied
+        if context.get('teff_correction_applied', False):
+            metadata['teff_correction'] = context.get('teff_correction_stats', {})
+            metadata['teff_correction']['target_column'] = model_config.get('teff_correction', {}).get('target_column', 'teff_gaia')
+            metadata['teff_correction']['corrected_column'] = context.get('teff_correction_column', 'unknown')
+
         metadata_file = models_dir / f"{model_id}_metadata.json"
         with open(metadata_file, 'w') as f:
             json.dump(metadata, f, indent=2)
@@ -828,6 +933,7 @@ class ConfigurableMLPipeline(Pipeline):
         steps = [
             LoadModelConfigStep(model_config_path),
             LoadDataFromConfigStep(),
+            ApplyTeffCorrectionStep(),  # Apply Teff correction before preprocessing
             PreprocessDataStep(),
             EngineerFeaturesFromConfigStep(),
             PrepareTrainTestFromConfigStep(),
