@@ -35,8 +35,10 @@ config/prediction/*.yaml
 !config/prediction/predict_gaia_teff_corrected_log.yaml
 !config/prediction/predict_gaia_cluster_teff_corrected_log.yaml
 !config/prediction/predict_gaia_logg_teff_log_corrected.yaml
+!config/prediction/template_prediction.yaml
 config/validation/*.yaml
 !config/validation/validate_gaia_cluster_teff_corrected_log.yaml
+!config/validation/template_validation.yaml
 
 # Development scripts (keep only deployment scripts)
 scripts/*

@@ -123,13 +123,61 @@ python pipeline.py --validate --val-config config/validation/validate_gaia_teff_
 
 **Output**: Plots saved to `reports/figures/`, metrics saved to `reports/`.
 
-### 4. Complete Pipeline
+### 4. Complete Pipeline (Train → Validate → Predict)
 
-Run all pipelines sequentially:
+Run all three steps in one command using bash command chaining:
+
+**Using Docker** (recommended):
+
+```bash
+# Single command for complete workflow
+docker compose run --rm train --ml --ml-config config/models/YOUR_CONFIG.yaml && \
+docker compose run --rm train --validate --val-config config/validation/YOUR_VALIDATION.yaml && \
+docker compose run --rm train --predict --pred-config config/prediction/YOUR_PREDICTION.yaml
+```
+
+**Local Installation**:
+
+```bash
+# Activate environment first
+source .venv/bin/activate
+
+# Run complete pipeline
+python pipeline.py --ml --ml-config config/models/YOUR_CONFIG.yaml && \
+python pipeline.py --validate --val-config config/validation/YOUR_VALIDATION.yaml && \
+python pipeline.py --predict --pred-config config/prediction/YOUR_PREDICTION.yaml
+```
+
+**Example: Multi-Survey Feature Engineering Pipeline**
+
+```bash
+# Train with Gaia + Pan-STARRS + 2MASS features
+docker compose run --rm train --ml --ml-config config/models/test_multisurvey_features.yaml && \
+docker compose run --rm train --validate --val-config config/validation/validate_multisurvey_test.yaml && \
+docker compose run --rm train --predict --pred-config config/prediction/predict_multisurvey_test.yaml
+```
+
+**Expected Outputs**:
+- **Training**: Model saved to `models/rf_*_TIMESTAMP.pkl` + metadata + summary
+- **Validation**: 5 plots in `reports/figures/YOUR_MODEL_validation/` + text report
+- **Predictions**: Parquet file in `data/processed/predictions_*.parquet`
+
+**Typical Timing** (for 1.75M training samples, 100 trees):
+- Training: 5-10 minutes (includes feature engineering)
+- Validation: 10-30 seconds
+- Prediction: 2-5 minutes (depends on dataset size and filtering)
+
+**Note**: The `&&` operator ensures each step only runs if the previous step succeeds. If training fails, validation and prediction will not run.
+
+### 5. Built-in Complete Pipeline
+
+Alternatively, run the full data processing + training + validation + prediction workflow:
 
 ```bash
 python pipeline.py --all
 ```
+
+This runs all built-in pipelines with default configurations. For custom workflows, use the chained commands above.
 
 ## Configuration
 
@@ -142,14 +190,62 @@ All pipelines are configured via YAML files in `config/`:
 - **`config/prediction/*.yaml`**: Prediction configurations (18 files)
   - Specify model, input data, preprocessing
   - Supports wildcard model matching
+  - **Template**: `template_prediction.yaml`
 
 - **`config/validation/*.yaml`**: Validation configurations (20 files)
   - Define plots, metrics, output locations
+  - **Template**: `template_validation.yaml`
 
 - **`config/config.yaml`**: Central configuration
   - Paths, datasets, default parameters
 
 See [docs/CONFIGURABLE_PIPELINE.md](docs/CONFIGURABLE_PIPELINE.md) for configuration details.
+
+### Creating Custom Configurations from Templates
+
+**Step 1: Copy the template files**
+
+```bash
+# Copy prediction template
+cp config/prediction/template_prediction.yaml config/prediction/my_prediction.yaml
+
+# Copy validation template
+cp config/validation/template_validation.yaml config/validation/my_validation.yaml
+```
+
+**Step 2: Customize for your model**
+
+Edit `config/prediction/my_prediction.yaml`:
+- Set `model_file` to your trained model (supports wildcards: `rf_my_model_*.pkl`)
+- Update `required_features` to match your training features
+- Set `feature_engineering.enabled` to match training configuration
+- Optionally add `filters` (e.g., `{teff_gaia: -999.0}` to only predict for objects without Teff)
+- Customize `output_file` and `include_columns`
+
+Edit `config/validation/my_validation.yaml`:
+- Set `model_pattern` to match your model files (e.g., `rf_my_model_*`)
+- Customize `figures_subdir` for output location
+- Set `report_file` path for text metrics
+- Adjust `target_info` (name, unit, short) if predicting something other than Teff
+
+**Step 3: Run the complete pipeline**
+
+```bash
+# Train your model first
+python pipeline.py --ml --ml-config config/models/my_model.yaml
+
+# Then run validation and prediction
+python pipeline.py --validate --val-config config/validation/my_validation.yaml && \
+python pipeline.py --predict --pred-config config/prediction/my_prediction.yaml
+```
+
+**Important Notes**:
+- **Feature Engineering**: Prediction config MUST match training config exactly!
+  - If training used `feature_engineering.enabled: true`, prediction must too
+  - All settings (`color_cols`, `mag_cols`, `polynomial_degree`, `interactions`) must match
+- **Target Transform**: If training used log transform, prediction automatically inverse-transforms
+- **Filters**: Production predictions should filter to objects without existing values (saves compute)
+- **Wildcards**: Model matching uses glob patterns - `rf_my_model_*` finds most recent timestamped version
 
 ## Model Performance
 
