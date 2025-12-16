@@ -3,13 +3,16 @@
 
 model:
   # Use the corrected log model
-  model_file: "rf_gaia_teff_corrected_log_20251126_130144.pkl"
+  model_file: "rf_gaia_teff_corrected_20251212_104032.pkl"
 
 data:
-  # Source dataset (filtered for predicted Teff only - ~847k objects)
-  source_file: "eb_unified_photometry_predicted_teff_only.parquet"
+  # Source dataset (use main training dataset for testing)
+  source_file: "eb_unified_photometry.parquet"
   id_column: "source_id"
-  filters: {}
+
+  # Filter to only predict for objects WITHOUT Teff (production mode)
+  filters:
+    teff_gaia: -999.0  # Only objects with missing Teff
 
 preprocessing:
   filter_missing: true
