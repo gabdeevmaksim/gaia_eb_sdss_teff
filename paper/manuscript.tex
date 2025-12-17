@@ -181,7 +181,24 @@ To enhance the feature space for temperature prediction, we initially explored e
 Specifically, we cross-matched the Gaia EB sources with the Pan-STARRS1 (PS1) DR2 catalog \citep{Chambers2017,Magnier2025}. 
 It provides $g, r, i, z, y$ photometry. And the Two Micron All Sky Survey (2MASS) \citep{Skrutskie2006}, which offers near-infrared $J, H, K_s$ magnitudes. 
 Our hypothesis was that additional passbands will provide valuable leverage for disentangling temperature and extinction, particularly in the near-infrared where the effects of dust are minimized. 
-The cross-matching process significantly reduced the sample size (\ref(table1)). 
+The cross-matching process significantly reduced the sample size (Table \ref{tab:coverage}). 
+
+\begin{table}[htbp]
+\centering
+\caption{Photometry Coverage and Temperature Availability}
+\label{tab:coverage}
+\begin{tabular}{l c c c}
+\hline
+\textbf{Dataset} & \textbf{Total Objects} & \textbf{With GSP-Phot Teff} & \textbf{Can be Predicted} \\
+\hline
+Gaia DR3 EB Catalog & 2,184,477 & 1,276,166 (58.4\%) & - \\
+Gaia ($G, BP, RP$) & 2,123,652 (97.2\%) & 1,276,166 & 847,486 \\
+Gaia + Pan-STARRS & 1,130,862 (51.8\%) & 707,821 & 423,041 \\
+Gaia + 2MASS & 1,123,471 (51.4\%) & 926,692 & 196,779 \\
+Gaia + PS + 2MASS & 647,260 (29.6\%) & 541,925 & 105,335 \\
+\hline
+\end{tabular}
+\end{table}
 
 Requiring detections in all surveys restricted the dataset to a fraction of the original catalog, limiting the generalizability of the final model to the full objects sample. 
 To maximize coverage and ensure our predictions are available for the vast majority of Gaia EBs, we prioritized a Gaia-only photometric approach, relying on the $G, BP, RP$ bands and their derived colors.
@@ -193,8 +210,19 @@ For training our machine learning models, we utilized the effective temperature 
 To assess the reliability of these labels, we compared the GSP-Phot temperatures against high-quality literature catalogs of detached eclipsing binaries (DEBCat) \citep{Southworth2015} and overcontact binaries (WUMaCat) \citep{WUMa_cat}. 
 This comparison revealed a strong overall correlation, validating the use of GSP-Phot values as a training baseline for the bulk of the population. 
 However, we identified a systematic bias in the high-temperature regime: for stars with $T_{\rm eff} \gtrsim 10,000$ K, GSP-Phot tends to underestimate the true effective temperature \ref(teff_comparison). 
-To mitigate this, we fitted a second-degree polynomial correction to the residuals between the GSP-Phot values and the trusted literature standards in this high-temperature domain. 
+To mitigate this, we fitted a second-degree polynomial correction to the residuals between the GSP-Phot values and the values from the catalogues \ref{fig:teff_comparison}. 
 This correction function was then applied to the training labels and incorporated into our final prediction pipeline to ensure accurate estimates for hotter systems.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.48\textwidth]{teff_comparison_T1.png}
+    \hfill
+    \includegraphics[width=0.48\textwidth]{teff_comparison_t1_corrected_deg2_T1.png}
+    \caption{Comparison of effective temperatures. Left: Gaia GSP-Phot temperatures vs. literature values (WUMaCat and DEBCat), showing the deviation for $T_{\rm eff} > 10,000$ K. Right: Corrected Gaia temperatures after polynomial adjustment.}
+    \label{fig:teff_comparison}
+\end{figure}
+
+
 
 \section{Methodology: Addressing Domain Shift and Feature Engineering}
 \label{sec:methods}
