@@ -1,0 +1,31 @@
+model:
+  name: "Gaia Colors Only Flag 1 (Corrected Teff)"
+  description: "Predictions from Gaia-only flag 1 model with corrected Teff and RF uncertainties"
+  model_file: "rf_gaia_colors_flag1_20251218_094937.pkl"
+
+data:
+  source_file: "eb_unified_photometry_with_flags.parquet"
+  source_format: "parquet"
+  source_location: "processed"
+  features:
+    - "g"
+    - "bp"
+    - "rp"
+    - "bp_rp"
+    - "g_rp"
+    - "g_bp"
+  id_column: "source_id"
+  filters:
+    teff_gaia_lt: 0.1  # Only predict for objects WITHOUT Gaia Teff (< 0.1 K)
+
+preprocessing:
+  missing_value: -999.0
+
+uncertainty:
+  enabled: true
+  method: "full_tree"  # Full tree method for accurate uncertainties
+
+output:
+  save_predictions: true
+  predictions_dir: "data/processed"
+  output_filename: "predictions_gaia_colors_flag1.parquet"

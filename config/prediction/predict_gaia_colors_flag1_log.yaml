@@ -1,0 +1,31 @@
+model:
+  name: "Gaia Colors Only Flag 1 Log Predictions"
+  description: "Predictions from Gaia-only flag 1 log model with RF uncertainties"
+  model_file: "rf_gaia_colors_flag1_log_20251217_110953.pkl"
+
+data:
+  source_file: "eb_unified_photometry_with_flags.parquet"
+  source_format: "parquet"
+  source_location: "processed"
+  features:
+    - "g"
+    - "bp"
+    - "rp"
+    - "bp_rp"
+    - "g_rp"
+    - "g_bp"
+  id_column: "source_id"
+
+preprocessing:
+  missing_value: -999.0
+  filters:
+    # No filters - predict on all available data
+
+uncertainty:
+  enabled: true
+  method: "full_tree"  # Full tree method for accurate uncertainties
+
+output:
+  save_predictions: true
+  predictions_dir: "data/predictions"
+  output_filename: "gaia_colors_flag1_log_predictions.parquet"
