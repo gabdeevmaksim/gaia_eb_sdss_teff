@@ -18,6 +18,8 @@
 %% with harvard style bibliographic references
 
 \documentclass[preprint,12pt,authoryear]{elsarticle}
+\usepackage{aas_macros}
+\usepackage{url}
 
 %% Use the option review to obtain double line spacing
 %% \documentclass[authoryear,preprint,review,12pt]{elsarticle}
@@ -48,7 +50,7 @@
 %% for the whole article with \linenumbers.
 %% \usepackage{lineno}
 
-\journal{Astronomy and Computing}
+\journal{New Astronomy}
 
 \begin{document}
 
@@ -81,63 +83,34 @@
 
 \title{Effective Temperature Prediction for Gaia Eclipsing Binaries using Ensemble of Random Forest models}
 
-%% use optional labels to link authors explicitly to addresses:
-%% \author[label1,label2]{}
-%% \affiliation[label1]{organization={},
-%%             addressline={},
-%%             city={},
-%%             postcode={},
-%%             state={},
-%%             country={}}
-%%
-%% \affiliation[label2]{organization={},
-%%             addressline={},
-%%             city={},
-%%             postcode={},
-%%             state={},
-%%             country={}}
+\author[upjs]{M. Gabdeev\corref{mycorrespondingauthor}}
+\author[upjs]{\v{S}. Parimucha}
+\cortext[mycorrespondingauthor]{maksim.gabdeev@upjs.sk}
 
-\author[1]{Author Name\corref{cor1}}
-\ead{author@email.com}
-\cortext[cor1]{Corresponding author}
+\affiliation[upjs]{
+            organization={Institute of Physics, Faculty of Science, Pavol Jozef \v{S}af\'arik University in Ko\v{s}ice},
+            addressline={Park Angelinum 9}, 
+            city={Ko\v{s}ice},
+            postcode={040 01}, 
+            state={},
+            country={Slovakia}}
 
-\affiliation[1]{organization={Department of Astronomy},%Department and Organization
-            addressline={Address}, 
-            city={City},
-            postcode={Zip}, 
-            state={State},
-            country={Country}}
 
 \begin{abstract}
-Eclipsing binaries (EBs) are fundamental benchmarks for stellar physics, yet a significant fraction of the ~2.5 million EBs in Gaia DR3 lack effective temperature ($T_{\rm eff}$) estimates or possess low-confidence parameters. 
-This work presents a comprehensive machine learning framework to predict $T_{\rm eff}$ for approximately 800000 EBs using exclusively Gaia DR3 photometry ($G, BP, RP$). 
-We initially explore multi-survey enrichment (SDSS, 2MASS) but prioritise a Gaia-only approach to maximise catalogue coverage.
+Eclipsing binaries (EBs) are fundamental benchmarks for stellar physics, yet a significant fraction of the ~2 million EBs in Gaia DR3 lack effective temperature ($T_{\rm eff}$) estimates. 
+This work presents a comprehensive machine learning framework to predict $T_{\rm eff}$ for over 800000 EBs using exclusively Gaia DR3 photometry. 
+We initially explore multi-survey enrichment (PANSTARRS, 2MASS) but prioritise a Gaia-only approach to maximise catalogue coverage.
 We implement and compare four distinct modelling strategies: 
 a Random Forest (RF) regressor trained on high quality GSP-Phot temperatures, 
 a RF regressor trained on log-transformed temperatures, 
 a model incorporating predicted surface gravity ($\log g$), 
 and a structure-augmented model leveraging unsupervised clustering of the colour space. 
 We introduce a "Best-of-Four" ensemble method that dynamically selects the prediction with the lowest internal model uncertainty for each source. 
-Our final catalog achieves a mean uncertainty of 203 K, significantly improving coverage and reliability for eclipsing binary research.
+Our final catalogue achieves a mean uncertainty of 203 K, significantly increasing effective temperatures coverage for EBs.
 \end{abstract}
 
-%%Graphical abstract
-%\begin{graphicalabstract}
-%\includegraphics{grabs}
-%\end{graphicalabstract}
-
-%%Research highlights
-%\begin{highlights}
-%\item Research highlight 1
-%\item Research highlight 2
-%\end{highlights}
-
 \begin{keyword}
-Eclipsing Binaries \sep Gaia \sep Machine Learning \sep Effective Temperature \sep Ensemble Methods
-%% keywords here, in the form: keyword \sep keyword
-%% PACS codes here, in the form: \PACS code \sep code
-%% MSC codes here, in the form: \MSC code \sep code
-%% or \MSC[2008] code \sep code (2000 is the default)
+Eclipsing Binaries \sep Gaia \sep Machine Learning \sep Effective Temperature 
 \end{keyword}
 
 \end{frontmatter}
@@ -150,8 +123,8 @@ Eclipsing Binaries \sep Gaia \sep Machine Learning \sep Effective Temperature \s
 \label{sec:intro}
 
 Eclipsing binaries (EBs) serve as fundamental pillars of modern astrophysics, offering one of the few direct methods to measure stellar masses and radii with high precision \citep{Andersen1991, Torres2010}. 
-As geometric distance indicators and stringent tests for stellar evolution models, their accurate characterisation is essential for calibrating the cosmic distance scale and understanding stellar structure. 
-With the eclipsing binaries catalogue release of Gaia Data Release 3 (DR3) \citep{GaiaDR3_EB}, the astronomical community has gained access to a catalogue of over 2 million identified eclipsing binaries, representing an order-of-magnitude increase over previous compilations.
+As distance indicators and stringent tests for stellar evolution models, their accurate characterisation is essential for calibrating the cosmic distance scale and understanding stellar structure. 
+With the eclipsing binaries catalogue release of Gaia Data Release 3 (DR3) \citep{GaiaDR3_EB}, the astronomical community has gained access to a catalogue of over 2 million objects that were classified as EBs, representing an order-of-magnitude increase over previous compilations.
 
 Traditionally, the precise determination of stellar parameters for eclipsing binaries requires a combination of multi-band photometric light curves and radial velocity measurements from spectroscopy. 
 Modelling the light curves yields geometric parameters (relative radii, inclination) and radiative properties (temperature ratios), while radial velocities constrain the absolute scale (masses, semi-major axis). 
@@ -159,44 +132,45 @@ The effective temperatures of the individual components are typically anchored b
 Several sophisticated codes have been developed to facilitate this modelling process, such as Wilson-Devinney (WD) code \citep{Wilson1971}, JKTEBOP \citep{Southworth2008}, PHOEBE (Physics Of Eclipsing Binaries) \citep{Prsa2005, Prsa2016}, ELISa \citep{Cokina2021}, and TEB (Temperatures for EB) \citep{Miller2020}. 
 However, this comprehensive approach is resource-intensive and limited to relatively bright systems with extensive observational follow-up. 
 For large-scale surveys like Gaia, where only limited photometric epochs or low-resolution spectra may be available for millions of targets, these rigorous methods are computationally prohibitive or data-limited.
-Nevertheless, the General Stellar Parameteriser from Photometry (GSP-Phot) \citep{GSPphot} provides parameters for approximately 1.2 million sources from Gaia EB catalogue: $T_{\rm eff}$, $logg$, and $Fe/H$ values.
-Nearly half of the catalogue ($\sim$800,000 objects) lacks any estimates. 
 
-To bridge this gap, we turn to machine learning (ML) solutions, which are well-suited to model high-dimensional, non-linear relationships in large datasets. 
-This work addresses the limitation by developing a homogeneous, high-coverage $T_{\rm eff}$ catalogue for eclipsing binaries using ML techniques applied to Gaia DR3 photometry. 
-Our primary objective is to maximise the utility of the existing photometric data ($G, BP, RP$) to predict temperatures for the $\sim$800,000 sources where GSP-Phot data is unavailable.
-We tested different approaches to estimate effective temperatures. 
-By leveraging a ``Best-of-Four'' ensemble strategy we significantly extend the available sample for EB research.
+Nevertheless, the General Stellar Parameteriser from Photometry (GSP-Phot) \citep{GSPphot} provides $T_{\rm eff}$, $logg$, and $Fe/H$ values for over 400 millions object. 
+\citet{Avdeeva2024} validated the  GSP-Phot catalogue against high-resolution surveys APOGEE(\citep{Majewski2017}), GALAH\citep{Buder2025}), demonstrating that over 60\% of the entries possess reliable temperature estimates consistent with spectroscopic precision. 
+Approximately 1.2 million sources from Gaia EB catalogue have the GSP-Phot parameters, while
+$\sim$800,000 objects lacks any estimates. This gives a machine learning training sample for EB that is an order of magnitude larger than those available from spectroscopic surveys for all types of stars. 
 
-This work is a part of the project to develop a robust automated pipeline for estimating stellar parameters for EBs using photometry. 
-We created a synthetic dataset using ELISa to train models and try to solve the problem. 
-We already published the results of classification of EBs using computer vision techniques \citep{Parimucha2025}.
-One can find the details about the synthetic dataset there. 
-We trained models to predict EB system parameters including $T1_{\rm_eff}/T2_{\rm_eff}$. 
-Thus we need to estimate $T_{\rm_eff}$ for one of the components to calculate absolute values for other parameters.
+The exponential growth of data from surveys has established machine learning as a fundamental tool for stellar parameter estimation \citep{Li2025}. Random Forest regressors, in particular, have proven effective for this task. For instance, \citet{Bai2019} applied this algorithm to derive effective temperatures for over 100 million stars in Gaia DR2. However, unlike their approach, which incorporated astrometric parameters ($\varpi, \mu$) to break the degeneracy between temperature and extinction, our pipeline relies exclusively on photometry to maintain independence from geometric distance constraints. 
 
-The paper is organized as follows: in Section \ref{sec:data} we describe the data we used to train and test the models.
-In Section \ref{sec:methods} we describe the methodology we used to train the models.
+Alternative architectures have also been explored. \citet{Wang2022} utilised Support Vector Regression (SVR) on J-PLUS photometry, employing a data-augmentation strategy to propagate observational errors. Deep learning models effectively handle complex magnetic activity in young stars \citep{Tarantino2025}. Both studies relied on spectroscopic effective temperatures as ground truth. \citet{Wang2022} utilised 12-band J-PLUS photometry as features \citep{Cenarro2019} to train Support Vector Regression models against labels from LAMOST \citep{Luo2015}, APOGEE, and SEGUE \citep{Yanny2009}, whereas \citet{Tarantino2025} employed Gaia DR3 \citep{GaiaDR3_main} and 2MASS photometry \citep{Skrutskie2006} to train Neural Networks on temperatures from the Gaia-ESO Survey \citep{Gilmore2012, Randich2013}.
+
+This work relies on GSP-Phot measurements and Gaia photometry and is a part of the project to develop a robust automated pipeline for estimating stellar parameters for EBs using photometry. 
+For that we created a synthetic dataset using ELISa to train Deep Learning models to predict parameters. 
+We already published the results of the first step in the pipeline: classification of EBs using computer vision techniques \citep{Parimucha2025}.
+The the paper contains the details of the classification algorithm and the synthetic dataset. 
+We also trained models to predict EB system parameters including $T1_{\rm_eff}/T2_{\rm_eff}$(paper in preparation). 
+To estimate absolute values of effective temperatures we need to estimate the temperature for one of the components as well as other parameters.
+
+The paper is organised as follows: in Section \ref{sec:data} we describe the data we used to train and test the models.
+In Section \ref{sec:methods} we describe the methodology of creating of the ensemble model.
 In Section \ref{sec:results} we present the results of the models.
 In Section \ref{sec:conclusion} we discuss the results and the future work.
 
 \section{Data Selection and Enrichment}
 \label{sec:data}
 
-The following section outlines the comprehensive series of experiments on input datasets conducted to optimise the temperature estimation pipeline. 
-We evaluated a wide range of data enrichment strategies---including multi-survey cross-matching and extensive feature engineering---to assess their impact on prediction accuracy and catalogue completeness. 
-The associated GitHub repository documents the full spectrum of these investigations, while this paper focuses on the successful strategies that constitute our final "Best-of-Four" ensemble. 
-The complete end-to-end pipeline, capable of reproducing all training, validation, and prediction steps, is made available in a dedicated branch of the repository, ensuring transparency and reproducibility of our results.
+The following section outlines series of experiments on input datasets conducted to optimise the temperature estimation pipeline. 
+We evaluated a range of data enrichment strategies---including multi-survey cross-matching and extensive feature engineering---to assess their impact on prediction accuracy and catalogue completeness. 
+The \textit{main} branch in the GitHub repository\footnote{https://github.com/gabdeevmaksim/gaia\_eb\_teff.git} documents the full spectrum of these investigations, while this paper focuses on the successful strategies that constitute our final "Best-of-Four" ensemble of models. 
+The complete end-to-end pipeline, capable of reproducing all training, validation, and prediction steps, is made available in a dedicated \textit{deploy} branch of the repository, ensuring transparency and reproducibility of our results.
 
 \subsection{Cross-matching with other surveys}
-The primary dataset for this study is derived from the Gaia Data Release 3 (DR3) Eclipsing Binary catalog \citep{GaiaDR3_EB}, which contains approximately 2.1 million identified eclipsing systems. 
-This represents the largest homogeneous catalog of EBs to date, offering all-sky coverage and precise photometry in the Gaia $G$ (330--1050 nm), ${BP}$ (330--680 nm), and ${RP}$ (630--1050 nm) passbands \citep{GaiaDR3_main}.
+The primary dataset for this study is derived from the Gaia Data Release 3 (DR3) Eclipsing Binary catalogue \citep{GaiaDR3_EB}, which contains approximately 2.1 million objects identified as EBs. 
+This represents the largest homogeneous catalogue of EBs to date, offering all-sky coverage and photometry in the Gaia $G$ (330--1050 nm), ${BP}$ (330--680 nm), and ${RP}$ (630--1050 nm) passbands \citep{GaiaDR3_main}.
 
 To enhance the feature space for temperature prediction, we initially explored enriching the Gaia catalogue with multi-wavelength photometry from other large-scale surveys. 
-Specifically, we cross-matched the Gaia EB sources with the Pan-STARRS1 (PS1) DR2 catalogue \citep{Chambers2017,Magnier2025}. 
+Specifically, we cross-matched the Gaia EB sources with the Pan-STARRS (PS1) DR2 catalogue \citep{Chambers2017,Magnier2025}. 
 It provides $g, r, i, z, y$ photometry. And the Two Micron All Sky Survey (2MASS) \citep{Skrutskie2006}, which offers near-infrared $J, H, K_s$ magnitudes. 
-Our hypothesis was that additional passbands will provide valuable leverage for disentangling temperature and extinction, particularly in the near-infrared where the effects of dust are minimized. 
-The cross-matching process significantly reduced the sample size (Table \ref{tab:coverage}). 
+Our hypothesis was that additional passbands will provide valuable leverage for disentangling temperature and extinction, particularly in the near-infrared where the effects of dust are minimised. 
+Disadvantage of the cross-matching process is significant reduction of the sample size (Table \ref{tab:coverage}). 
 
 \begin{table}[htbp]
 \centering
@@ -204,20 +178,27 @@ The cross-matching process significantly reduced the sample size (Table \ref{tab
 \label{tab:coverage}
 \begin{tabular}{l c c c}
 \hline
-\textbf{Dataset} & \textbf{Total Objects} & \textbf{With GSP-Phot Teff} & \textbf{Can be Predicted} \\
+\textbf{Dataset} & \textbf{Total} & \textbf{GSP-Phot Teff} & \textbf{To Predict} \\
 \hline
-Gaia DR3 EB Catalog & 2,184,477 & 1,276,166 (58.4\%) & - \\
-Gaia ($G, BP, RP$) & 2,123,652 (97.2\%) & 1,276,166 & 847,486 \\
-Gaia + Pan-STARRS & 1,130,862 (51.8\%) & 707,821 & 423,041 \\
-Gaia + 2MASS & 1,123,471 (51.4\%) & 926,692 & 196,779 \\
-Gaia + PS + 2MASS & 647,260 (29.6\%) & 541,925 & 105,335 \\
+Gaia DR3 EB Catalog & 2,184,477 & 1,276,166  & - \\
+Gaia ($G, BP, RP$) & 2,123,652  & 1,276,166 & 847,486 \\
+Gaia + Pan-STARRS & 1,130,862  & 707,821 & 423,041 \\
+Gaia + 2MASS & 1,123,471 & 926,692 & 196,779 \\
+Gaia + PS + 2MASS & 647,260  & 541,925 & 105,335 \\
 \hline
 \end{tabular}
 \end{table}
 
 Requiring detections in all surveys restricted the dataset to a fraction of the original catalogue, limiting the generalisability of the final model to the full objects sample. 
-To maximise coverage and ensure our predictions are available for the vast majority of Gaia EBs, we prioritized a Gaia-only photometric approach, relying on the $G, BP, RP$ bands and their derived colours.
+To maximise coverage and ensure our predictions are available for the vast majority of Gaia EBs, we prioritised a Gaia-only photometry approach, relying on the $G, BP, RP$ bands and their derived colours.
 Nevertheless, we trained and validate the models using different combinations of features to find the best performing model.
+
+It is necessary to mention that we deliberately excluded parallax measurements from our feature set. 
+While parallaxes could provide luminosity constraints, their uncertainties increase significantly for distant fainter objects--- the population we aim to characterise. 
+Furthermore, avoiding parallax usage at the prediction stage prevents circularity in subsequent analyses. 
+The primary effective temperature ($T_{\rm eff}$) derived here will be used in conjunction with temperature ratios ($T_1/T_2$), inclinations, and potentials derived from light curve modelling using ELISa to fix the scale of the binary system. 
+Subsequent integration with Gaia parallaxes then allows for the determination of absolute luminosities and radii, which can ultimately constrain masses via mass-luminosity relations for main-sequence components. 
+Using parallax to predict $T_{\rm eff}$ would compromise the independence of this absolute scaling step.
 
 \subsection{Validation and Correction of Training Labels}
 For training our machine learning models, we utilised the effective temperature ($T_{\rm eff}$) estimates provided by the Gaia GSP-Phot pipeline \citep{GSPphot}. 
@@ -235,7 +216,7 @@ This correction function was then applied to the training labels and incorporate
     \includegraphics[width=0.48\textwidth]{teff_comparison_t1_corrected_deg2_T1.png}
     \caption{Comparison of effective temperatures. 
     Left: Gaia GSP-Phot temperatures vs. literature values (WUMaCat and DEBCat), showing the deviation for $T_{\rm eff} > 10,000$ K. 
-    Right: Corrected Gaia temperatures after polynomial adjustment.}
+    Right: Corrected Gaia temperatures after polynomial adjustment. The legend on the right plot is applicable for both figures.}
     \label{fig:teff_comparison}
 \end{figure}
 
@@ -248,7 +229,7 @@ We additionally applied a log-transformation to the temperatures to test how the
 We utilised the quality flags defined by \cite{Avdeeva2024} for the Gaia DR3 GSP-Phot parameters. 
 Their work employs machine learning methods (XGBoost, CatBoost, LightGBM) to classify the reliability of GSP-Phot effective temperatures by comparing them against high-resolution spectroscopic catalogues (APOGEE DR17, GALAH DR3). 
 They provide binary quality flags (1 for reliable, 0 for unreliable) that effectively filter out discrepant temperatures, achieving a precision of $\sim$90\% for temperatures accurate to within 250 K. 
-We specifically selected objects flagged as ``good'' by their ensemble model to construct a training set free from significant systematic errors and model-dependent artifacts present in the raw GSP-Phot catalogue.
+We specifically selected objects flagged as ``good'' by their models to construct a training set free from significant systematic errors and model-dependent artifacts present in the raw GSP-Phot catalogue.
 
 \subsection{Feature Engineering}
 We expanded our feature space beyond the basic magnitudes and colours. 
@@ -265,10 +246,10 @@ The temperature prediction on the object's likely evolutionary state or populati
 \section{Methodology}
 \label{sec:methods}
 
-For model training, we utilised the Random Forest regressor \citep{RF} from the \texttt{scikit-learn} library. To ensure consistent model performance and manage computational resources effectively, we adopted a two-stage approach to model optimisation. 
+For model training, we utilised the Random Forest regressor \citep{RF} from the \texttt{scikit-learn}\footnote{https://scikit-learn.org/stable/} library. To ensure consistent model performance and manage computational resources effectively, we adopted a two-stage approach to model optimisation. 
 Initial experiments to perform a comprehensive grid search for hyper-parameter tuning on the full dataset proved computationally prohibitive given the available hardware (2.3 GHz 8-Core Intel Core i9, CPU only). 
-Therefore, we determined the optimal hyper-parameters (number of trees, maximum depth, minimum samples split/leaf) using a representative subset of the data and varying input feature sets. 
-Once established, these hyper-parameters ($n_{estimators}=300$, $max_{depth}=20$, $min_{samples\_leaf}=4$) were fixed and applied consistently across all subsequent models to ensure fair comparison of feature engineering strategies.
+Therefore, we determined the optimal hyper-parameters (number of trees $n$, maximum depth $d$, minimum samples split/leaf $l$) using a representative subset of the data and varying input feature sets. 
+Once established, these hyper-parameters ($n=300$, $d=20$, $l=4$) were fixed and applied consistently across all subsequent models to ensure fair comparison of feature engineering strategies.
 
 Additional photometry from different surveys respectively reduced the number of objects in the training set (see Table \ref{tab:coverage}).
 Nevertheless the obtained dataset was split into training (80\%) and testing (20\%) subsets using a stratified split to preserve the distribution of the target variable $T_{\rm eff}$. 
@@ -285,12 +266,10 @@ We used those standard deviations as the final uncertainty estimate for the pred
     \begin{minipage}{0.48\textwidth}
         \centering
         \includegraphics[width=\linewidth]{feature_importance.png} % Replace with first plot
-        \label{fig:plot1}
     \end{minipage}\hfill
     \begin{minipage}{0.48\textwidth}
         \centering
         \includegraphics[width=\linewidth]{true_vs_predicted.png} % Replace with second plot
-        \label{fig:plot2}
     \end{minipage}
     
     \vspace{0.5cm}
@@ -298,16 +277,14 @@ We used those standard deviations as the final uncertainty estimate for the pred
     \begin{minipage}{0.48\textwidth}
         \centering
         \includegraphics[width=\linewidth]{rmse_by_temperature_line.png} % Replace with third plot
-        \label{fig:plot3}
     \end{minipage}\hfill
     \begin{minipage}{0.48\textwidth}
         \centering
-        \includegraphics[width=\linewidth]{percentage_within_10pct.png}
-        \label{fig:plot4}
+        \includegraphics[width=\linewidth]{percentage_within_10pct.png}    
     \end{minipage}
     \caption{Validation plots of the model \textbf{Gaia\_phot\_flag1}. 
     Top-left: Feature importance ranking derived from the Random Forest model. 
-    Top-right: Density scatter plot of predicted vs. true (GSP-Phot) temperatures; the dashed line represents the 1:1 relation, while dotted lines indicate $\pm 10\%$ error margins. 
+    Top-right: Predicted vs. true (GSP-Phot) temperatures; the dashed line represents the 1:1 relation, while dotted lines indicate $\pm 10\%$ error margins. 
     Bottom-left: RMSE as a function of temperature, showing increased uncertainty for hotter stars. 
     Bottom-right: Percentage of test objects with predictions within 10\% of the true value across temperature bins.}
     \label{fig:four_panel_comparison}
@@ -318,30 +295,31 @@ We used those standard deviations as the final uncertainty estimate for the pred
 
 To maximise the predictive power and reliability of our temperature estimates, we trained several distinct Random Forest models. 
 Table \ref{tab:model_metrics} summarises the performance metrics for these individual models. 
-Our feature importance analysis showed that magnitude features ($G$, $BP$, $RP$) consistently ranked highly across all models.
-Attempts to train models using exclusively colour indices did not yield performance improvements, likely due to the loss of luminosity-related information encoded in the absolute flux levels (even without parallax). 
-While including additional colour bands from external surveys (Pan-STARRS, 2MASS) marginally improved prediction accuracy. 
-However, the severe reduction in sample overlap (as discussed in Section \ref{sec:data}) justified our decision to rely solely on Gaia photometry to maximise catalogue utility.
+Our feature importance analysis showed that magnitude features consistently ranked highly across all models.
+Attempts to train models using exclusively colour indices did not yield performance improvements, likely due to the loss of luminosity-related information encoded in the magnitudes (even without parallax). 
+Including additional colour bands from external surveys (Pan-STARRS, 2MASS) marginally improved prediction accuracy. 
+The severe reduction in sample overlap (as discussed in Section \ref{sec:data}) justified our decision to rely solely on Gaia photometry to maximise catalogue utility.
 
 The best-performing individual model (designated \textit{gaia\_phot\_flag1}) was trained on the subset of stars with high-quality GSP-Phot temperatures (Quality Flag = 1, \cite{Avdeeva2024}). 
-The strict filtering criteria of the quality classifier meant that the training set was heavily dominated by stars cooler than 8000 K.
+The filtering criteria of the quality classifier meant that the training set was heavily dominated by stars cooler than 8000 K.
 That led to worse performance for hotter objects in the test set. 
-To address this and other regime-specific weaknesses, we developed three complementary models.
+To address this and other regime-specific weaknesses, we trained three complementary models.
 
 Recognising the physical dependence of effective temperature on surface gravity and metallicity, we explored incorporating GSP-Phot $\log g$ and [Fe/H] values. 
-A model trained with these valid GSP-Phot parameters showed significant improvement. 
-Since these values are missing for our target prediction sample, we first trained auxiliary models to predict them from Gaia photometry. 
-Our validation showed that $\log g$ could be predicted with sufficient accuracy to be useful, whereas [Fe/H] predictions proved unreliable. 
-Consequently, we predicted $\log g$ for the entire dataset and used these values---along with their propagated prediction uncertainties---as input features for a "Gravity-Augmented" temperature model.
+A model trained with these valid GSP-Phot parameters showed significant improvement ("Gaia with GSP-Phot params", Table \ref{tab:model_metrics}). 
+Since $\log g$ and [Fe/H] values are missing for our target prediction sample, we first trained auxiliary models to predict them from Gaia photometry. 
+Our validation showed that $\log g$ could be predicted with sufficient accuracy to be useful, whereas [Fe/H] predictions proved unreliable ("Predicted $\log g$ (Auxiliary)" and "Predicted [Fe/H] (Auxiliary)", Table \ref{tab:model_metrics}). 
+Consequently, we predicted $\log g$ for the objects without GSP-Phot values and used these values as input feature for a "Gravity-Augmented" temperature model. Uncertainties of $\log g$ predictions were used to create two additional $T_{\rm eff}$ values for each object. The final prediction error for this model accounted for all three $T_{\rm eff}$ and their uncertainties. 
 
 We further diversified our modelling approach by training a "Clustering-Augmented" model, which uses the soft probability coefficients from our GMM analysis of the colour space as inputs.
 It is important to note that this clustering process was entirely unsupervised.
 We did not explicitly control how the model distinguishes between physical stellar types such as Main Sequence stars, dwarfs, sub-giants, or giants, relying instead on the inherent structure of the photometric data. 
+
 Finally, to better handle the skewed distribution of stellar temperatures and improve performance at the temperature range edges, we trained a model on the logarithm of the effective temperature ($\log T_{\rm eff}$).
 
-The final "Best-of-Four" catalogue was constructed by dynamically selecting the prediction from these four models (High-Quality Base, Gravity-Augmented, Clustering-Augmented, Log-Transformed) that exhibited the lowest internal uncertainty for each specific object. 
+The "Best-of-Four" catalogue was constructed by dynamically selecting the prediction from these four models that exhibited the lowest internal uncertainty for each specific object. 
 This ensemble approach leverages the fact that different models specialise in different regions of the parameter space. 
-The trained models and the final enriched catalogue are publicly available in the Hugging Face repository\footnote{Link to HF repo}.
+The trained models\footnote{https://huggingface.co/Dedulek/gaia-eb-teff-models} and the final enriched catalogue\footnote{ https://huggingface.co/datasets/Dedulek/gaia-eb-teff-datasets} are publicly available in the respective Hugging Face repositories.
 
 \begin{table}[htbp]
 \centering
@@ -351,24 +329,92 @@ The trained models and the final enriched catalogue are publicly available in th
 \hline
 \textbf{Model} & \textbf{MAE (K)} & \textbf{RMSE (K)} & \textbf{$R^2$} \\
 \hline
-Gaia + PS + 2MASS & 578 & 939 & 0.61 \\
-Gaia with GSP-Phot params ($\log g$, [Fe/H]) & 349 & 678 & 0.75 \\
-Predicted $\log g$ (Auxiliary) & 0.13 dex & 0.20 dex & 0.71 \\
-Predicted [Fe/H] (Auxiliary) & 0.32 dex & 0.43 dex & 0.61 \\
+Gaia + 2MASS & 456 & 741 & 0.76 \\
+Gaia with GSP-Phot params & 403 & 805 & 0.78 \\
+Predicted $\log g$ (Auxiliary) & 0.1 dex & 0.2 dex & 0.72 \\
+Predicted [Fe/H] (Auxiliary) & 0.4 dex & 0.5 dex & 0.51 \\
 \hline
-Gaia Base (Flag=1) & 196 & 312 & 0.91 \\
-Log-Transformed & 195 & 313 & 0.91 \\
+Gaia (Flag=1) & 196 & 312 & 0.91 \\
+Log-Transformed & 556 & 1021 & 0.64 \\
 Gravity-Augmented (Predicted $\log g$) & 504 & 936 & 0.70 \\
 Clustering-Augmented & 509 & 897 & 0.73 \\
-\textbf{Best-of-Four Ensemble} & \textbf{203} & \textbf{350} & \textbf{0.96} \\
 \hline
 \end{tabular}
 \end{table}
 
 
-%% If you have bib database file and want bibtex to generate the
-%% bibitems, please use
-%%
+\section{Results and Validation}
+\label{sec:results}
+
+The application of our "Best-of-Four" ensemble methodology to the Gaia DR3 Eclipsing Binary catalogue yielded effective temperature predictions for 834,585 objects that previously lacked GSP-Phot estimates. 
+Combined with the 1,251,127 objects having original GSP-Phot temperature values, our final catalogue provides temperatures for 2,085,712 sources, covering 97.2\% of the initial input list. 
+The remaining 2.8\% (59,598 objects) were excluded either due to missing photometry value in one of the passbands or because they fell outside the reliable domain of our training models.
+
+The ensemble approach demonstrated significant gains in precision compared to individual models. 
+By dynamically selecting the model with the lowest internal uncertainty for each target, the mean prediction uncertainty across the ML sample was reduced to 203 K (median 168 K), a marked improvement over the mean uncertainty of ~260 K achieved by the best single-model baseline. 
+The distribution of selected models reflects the complementary nature of our strategies: 
+the standard \textit{teff\_only} model was optimal for 33.6\% of sources, 
+the high-quality \textit{teff\_flag1} model for 29.2\%, 
+the \textit{teff\_cluster} model for 19.3\%, 
+and the \textit{teff\_logg} model for 18.0\%. 
+This relatively balanced distribution confirms that no single approach dominates across the entire parameter space of eclipsing binaries.
+
+To facilitate appropriate usage, we assigned quality flags to all entries in the final catalogue (Table \ref{tab:quality_flags}). 
+Class `A' denotes original high-quality GSP-Phot measurements (58.3\% of the Gaia EB catalogue). 
+For ML predictions, Class `B' represents high-confidence estimates with uncertainties $<300$ K (34.4\% of the catalogue). 
+Class `C' ($300<$ uncertainty $<500$ K, 3.0\%) and `D' (uncertainty $\ge 500$ K, 1.6\%).
+
+\begin{table}[htbp]
+\centering
+\caption{Quality Flag Distribution in the Final Catalogue}
+\label{tab:quality_flags}
+\begin{tabular}{l l r r}
+\hline
+\textbf{Flag} & \textbf{Description} & \textbf{Count} & \textbf{Percentage} \\
+\hline
+A & Gaia GSP-Phot (Original) & 1,251,127 & 58.3\% \\
+B & ML Prediction ($\sigma < 300$ K) & 736,974 & 34.4\% \\
+C & ML Prediction ($\sigma < 500$ K) & 64,031 & 3.0\% \\
+D & ML Prediction ($\sigma \ge 500$ K) & 33,580 & 1.6\% \\
+X & No Prediction Available & 59,598 & 2.8\% \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[htpb]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{temperature_distribution_comparison.png}
+    \end{minipage}\hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{uncertainty_distribution.png}
+    \end{minipage}
+    \caption{On the left there is the distribution of effective temperatures of predicted values compared to the original GSP-Phot sample. On the right the distribution of estimated uncertainties for the ML-predicted subset.}
+    \label{fig:catalog_dist}
+\end{figure}
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+In this work, we addressed the significant gap in effective temperature estimates for the Gaia DR3 Eclipsing Binary catalogue. 
+Approximately 40\% of the 2.1 million sources lacked these estimates. 
+By developing a "Best-of-Four" ensemble machine learning framework utilising exclusively Gaia photometry, we have successfully generated temperature predictions for 834,585 previously uncharacterised systems. 
+Our final enriched catalogue now provides effective temperatures for 97.2\% of the Gaia EB sample.
+
+The core of our methodology lies in the dynamic ensemble selection. 
+It leverages the internal uncertainty estimates of Random Forest regressors to choose the most reliable prediction for each individual star. 
+This approach allowed us to combine the strengths of complementary modelling strategies.
+The resulting predictions errors are less than 300 K for the majority of the sample. 
+ 
+By excluding parallax from the input feature set, we ensure that these temperatures can be used as independent priors in downstream analyses. 
+Specifically, these values are intended to fix the radiative temperature scale in light curve modelling pipelines (e.g., ELISa), enabling the subsequent independent determination of absolute luminosities and radii using Gaia parallaxes.
+
+We provide the community with the full Gaia EB catalogue with quality flags to guide sample selection for different scientific use cases. 
+To support open science and further development, we release not only the pre-trained models but also the complete, configurable training pipeline. 
+This resource allows researchers to reproduce our work, train custom models on their own datasets, or adapt the ensemble framework for other stellar parameter estimation.
+
 \bibliographystyle{elsarticle-harv} 
 \bibliography{bibliography.bib}
 
